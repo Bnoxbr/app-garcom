@@ -1,69 +1,103 @@
-# React + TypeScript + Vite
+# App Garçom 🍽️
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplicativo para contratação de profissionais de gastronomia (garçons, bartenders, chefs, etc.) para eventos.
 
-Currently, two official plugins are available:
+## 🚀 Tecnologias
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 18** com TypeScript
+- **Vite** para build e desenvolvimento
+- **Tailwind CSS** para estilização
+- **Supabase** para backend e banco de dados
+- **Lucide React** para ícones
 
-## Expanding the ESLint configuration
+## 📋 Pré-requisitos
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Node.js 18+ 
+- npm ou yarn
+- Conta no Supabase
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+## ⚙️ Configuração
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 1. Clone o repositório
+```bash
+git clone <url-do-repositorio>
+cd app-garcom
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### 2. Instale as dependências
+```bash
+npm install
 ```
+
+### 3. Configure o Supabase
+
+1. Crie um projeto no [Supabase](https://supabase.com)
+2. Copie o arquivo `.env.example` para `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+3. Preencha as variáveis de ambiente no arquivo `.env`:
+   ```env
+   VITE_SUPABASE_URL=https://seu-projeto.supabase.co
+   VITE_SUPABASE_ANON_KEY=sua-chave-anonima
+   ```
+
+### 4. Configure o banco de dados
+
+1. No painel do Supabase, vá para **SQL Editor**
+2. Execute o arquivo `database/migrations.sql` para criar as tabelas
+3. Execute o arquivo `database/seed-data.sql` para popular com dados de exemplo
+
+### 5. Execute o projeto
+```bash
+npm run dev
+```
+
+O aplicativo estará disponível em `http://localhost:5173`
+
+## 📁 Estrutura do Projeto
+
+```
+src/
+├── components/          # Componentes React
+├── hooks/              # Custom hooks
+├── lib/                # Configurações (Supabase)
+├── types/              # Definições TypeScript
+├── App.tsx             # Componente principal
+└── main.tsx            # Ponto de entrada
+
+database/
+├── migrations.sql      # Schema do banco
+└── seed-data.sql       # Dados de exemplo
+```
+
+## 🔧 Scripts Disponíveis
+
+- `npm run dev` - Inicia o servidor de desenvolvimento
+- `npm run build` - Gera build de produção
+- `npm run preview` - Visualiza build de produção
+- `npm run lint` - Executa linting do código
+
+## 📱 Funcionalidades
+
+- [x] Listagem de profissionais
+- [x] Filtros por categoria
+- [x] Busca por nome
+- [x] Filtros de distância e disponibilidade
+- [ ] Sistema de autenticação
+- [ ] Agendamento de serviços
+- [ ] Avaliações e comentários
+- [ ] Chat em tempo real
+- [ ] Pagamentos integrados
+
+## 🤝 Contribuição
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para detalhes.
