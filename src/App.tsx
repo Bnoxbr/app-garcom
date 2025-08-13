@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useProfessionals } from './hooks/useProfessionals'
 import { useCategories } from './hooks/useCategories'
 import { Loading, ErrorMessage } from './components'
-import type { Professional, Category } from './types/index';
+
 
 const App: React.FC = () => {
   // Hooks do Supabase
