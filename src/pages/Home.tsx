@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfessionals } from '../hooks/useProfessionals'
 import { useCategories } from '../hooks/useCategories'
-import { Loading, ErrorMessage } from '../components'
+import { Loading, ErrorMessage, DebugPanel } from '../components'
 
 
 const Home: React.FC = () => {
@@ -36,6 +36,7 @@ const Home: React.FC = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showFloatingMenu, setShowFloatingMenu] = useState(false);
   const [_showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showDebugPanel, setShowDebugPanel] = useState(false);
   const [filters, setFilters] = useState({
     distance: '0-5',
     availability: 'now',
@@ -417,6 +418,20 @@ const Home: React.FC = () => {
             <i className="fas fa-plus text-xl"></i>
           </button>
         </div>
+        
+        {/* Botão de Debug (apenas em desenvolvimento) */}
+        <button
+          onClick={() => setShowDebugPanel(true)}
+          className="fixed bottom-4 left-4 bg-red-500 text-white p-2 rounded-full shadow-lg z-40 text-xs"
+          title="Debug Panel"
+        >
+          🔍
+        </button>
+        
+        {/* Debug Panel */}
+        {showDebugPanel && (
+          <DebugPanel onClose={() => setShowDebugPanel(false)} />
+        )}
       </div>
     </div>
   );

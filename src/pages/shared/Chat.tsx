@@ -209,7 +209,7 @@ const Chat: React.FC = () => {
       </div>
 
       {/* Custom Styles */}
-      <style jsx>{`
+      <style>{`
         .no-scrollbar::-webkit-scrollbar {
           display: none;
         }

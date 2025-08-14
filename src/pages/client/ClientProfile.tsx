@@ -337,7 +337,7 @@ const ClientProfile: React.FC = () => {
                 )}
               </div>
               <div className="grid grid-cols-3 gap-2">
-                {photos.map((photo, index) => (
+                {photos.map((_, index) => (
                   <div
                     key={index}
                     className="relative aspect-square rounded-lg overflow-hidden"

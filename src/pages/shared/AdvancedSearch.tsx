@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import PlaceholderImage from '../../components/ui/PlaceholderImage';
 import NavigationPlaceholder from '../../components/ui/NavigationPlaceholder';
 
 const AdvancedSearch: React.FC = () => {
