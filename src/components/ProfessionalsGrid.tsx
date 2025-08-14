@@ -1,14 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-
-interface Professional {
-  id: number;
-  name: string;
-  category: string;
-  rating: number;
-  distance: string;
-  image_url?: string;
-}
+import type { Professional } from '../types';
 
 interface ProfessionalsGridProps {
   professionals: Professional[];
