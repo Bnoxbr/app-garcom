@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfessionals } from '../hooks/useProfessionals'
 import { useCategories } from '../hooks/useCategories'
-import { Loading, ErrorMessage, DebugPanel } from '../components'
+import { Loading, ErrorMessage, ProfessionalsGrid } from '../components'
 
 
 const Home: React.FC = () => {
@@ -36,7 +36,7 @@ const Home: React.FC = () => {
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showFloatingMenu, setShowFloatingMenu] = useState(false);
   const [_showProfileMenu, setShowProfileMenu] = useState(false);
-  const [showDebugPanel, setShowDebugPanel] = useState(false);
+
   const [filters, setFilters] = useState({
     distance: '0-5',
     availability: 'now',
@@ -98,22 +98,16 @@ const Home: React.FC = () => {
   }
 
   return (
-    <div className="relative min-h-screen text-gray-800 pb-16" 
-      style={{
-        backgroundImage: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-        backgroundAttachment: 'fixed'
-      }}>
-      <div className="absolute inset-0 bg-black bg-opacity-50"></div>
+    <div className="relative min-h-screen text-gray-800 pb-24 bg-gray-100">
+      <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-200"></div>
       <div className="relative z-1">
         {/* Main Content */}
         <div className="px-4 relative z-10">
           {/* Welcome Section */}
           <div className="mt-4 mb-6">
-            <h2 className="text-xl font-semibold text-white">Olá, seja bem-vindo!</h2>
-            <p className="text-gray-200">Encontre profissionais qualificados para seu evento ou estabelecimento</p>
-            <p className="text-gray-300 mt-1 text-sm">Ideal para restaurantes, buffets e eventos particulares</p>
+            <h2 className="text-xl font-semibold text-gray-800">Olá, seja bem-vindo!</h2>
+            <p className="text-gray-600">Encontre profissionais qualificados para seu evento ou estabelecimento</p>
+            <p className="text-gray-500 mt-1 text-sm">Ideal para restaurantes, buffets e eventos particulares</p>
           </div>
 
           {/* Search Bar */}
@@ -235,8 +229,8 @@ const Home: React.FC = () => {
           {/* Categories */}
           <div className="mb-6">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-semibold text-white">Categorias</h3>
-              <span className="text-sm text-gray-300">{filteredProfessionals.length} profissionais encontrados</span>
+              <h3 className="text-lg font-semibold text-gray-800">Categorias</h3>
+            <span className="text-sm text-gray-600">{filteredProfessionals.length} profissionais encontrados</span>
             </div>
             <div className="flex overflow-x-auto pb-2 space-x-3 relative">
               {showToast && (
@@ -281,65 +275,17 @@ const Home: React.FC = () => {
             </button>
           </div>
 
-          {/* Professionals List */}
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-semibold text-white">Profissionais Disponíveis</h3>
-              <button 
-                onClick={() => navigate('/search')}
-                className="text-gray-300 text-sm flex items-center cursor-pointer">
-                <span>Filtrar</span>
-                <i className="fas fa-sliders-h ml-1"></i>
-              </button>
-            </div>
-            <div className="space-y-4 relative z-10">
-              {filteredProfessionals.map(professional => (
-                <div key={professional.id} className="bg-white rounded-lg shadow-sm p-4 flex cursor-pointer">
-                  <div className="mr-3">
-                    <div className="w-[70px] h-[70px] rounded-lg overflow-hidden">
-                      <img
-                        src={professional.image_url || '/placeholder-avatar.jpg'}
-                        alt={professional.name}
-                        className="w-full h-full object-cover cursor-pointer"
-                        onClick={() => navigate('/provider/profile')}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex-1">
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <h4 className="font-semibold">{professional.name}</h4>
-                        <p className="text-sm text-gray-600">{professional.category}</p>
-                      </div>
-                      <div className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
-                        Disponível
-                      </div>
-                    </div>
-                    <div className="flex items-center mt-2 text-sm">
-                      <div className="flex items-center text-yellow-500 mr-3">
-                        <i className="fas fa-star mr-1"></i>
-                        <span>{professional.rating}</span>
-                        <span className="text-gray-500 ml-1">(avaliações)</span>
-                      </div>
-                      <div className="flex items-center text-gray-500">
-                        <i className="fas fa-map-marker-alt mr-1"></i>
-                        <span>{professional.distance}</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Professionals Grid */}
+          <ProfessionalsGrid professionals={filteredProfessionals} />
         </div>
 
         {/* Tab Bar */}
-        <div className="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-lg z-10">
+        <div className="fixed bottom-4 left-4 right-4 bg-white rounded-2xl shadow-lg z-10 border border-gray-100">
           <div className="grid grid-cols-5 h-16">
             <button
               id="homeButton"
               onClick={handleHomeRefresh}
-              className="flex flex-col items-center justify-center text-gray-800 cursor-pointer relative"
+              className="flex flex-col items-center justify-center text-gray-800 cursor-pointer relative rounded-2xl"
             >
               {isRefreshing ? (
                 <i className="fas fa-spinner fa-spin text-lg"></i>
@@ -350,28 +296,28 @@ const Home: React.FC = () => {
             </button>
             <button 
               onClick={() => navigate('/search')}
-              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer"
+              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer rounded-2xl"
             >
               <i className="fas fa-search text-lg"></i>
               <span className="text-xs mt-1">Buscar</span>
             </button>
             <button 
               onClick={() => navigate('/auctions')}
-              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer"
+              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer rounded-2xl"
             >
-              <i className="fas fa-calendar-alt text-lg"></i>
-              <span className="text-xs mt-1">Agenda</span>
+              <i className="fas fa-gavel text-lg"></i>
+              <span className="text-xs mt-1">Leilão</span>
             </button>
             <button 
               onClick={() => navigate('/chat')}
-              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer"
+              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer rounded-2xl"
             >
               <i className="fas fa-comment-alt text-lg"></i>
               <span className="text-xs mt-1">Chat</span>
             </button>
             <button 
               onClick={() => navigate('/profile')}
-              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer"
+              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer rounded-2xl"
             >
               <i className="fas fa-building text-lg"></i>
               <span className="text-xs mt-1">Perfil</span>
@@ -419,19 +365,7 @@ const Home: React.FC = () => {
           </button>
         </div>
         
-        {/* Botão de Debug (apenas em desenvolvimento) */}
-        <button
-          onClick={() => setShowDebugPanel(true)}
-          className="fixed bottom-4 left-4 bg-red-500 text-white p-2 rounded-full shadow-lg z-40 text-xs"
-          title="Debug Panel"
-        >
-          🔍
-        </button>
-        
-        {/* Debug Panel */}
-        {showDebugPanel && (
-          <DebugPanel onClose={() => setShowDebugPanel(false)} />
-        )}
+
       </div>
     </div>
   );
