@@ -4,11 +4,14 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfessionals } from '../hooks/useProfessionals'
 import { useCategories } from '../hooks/useCategories'
+import { useAuthContext, useAuth } from '../hooks/useAuth'
 import { Loading, ErrorMessage, ProfessionalsGrid } from '../components'
 
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
+  const { user, profile } = useAuthContext();
+  const { signOut } = useAuth();
   
   // Hooks do Supabase
   const { professionals, loading: professionalsLoading, error: professionalsError, refetch: refetchProfessionals } = useProfessionals();
@@ -105,9 +108,49 @@ const Home: React.FC = () => {
         <div className="px-4 relative z-10">
           {/* Welcome Section */}
           <div className="mt-4 mb-6">
-            <h2 className="text-xl font-semibold text-gray-800">Olá, seja bem-vindo!</h2>
-            <p className="text-gray-600">Encontre profissionais qualificados para seu evento ou estabelecimento</p>
-            <p className="text-gray-500 mt-1 text-sm">Ideal para restaurantes, buffets e eventos particulares</p>
+            <div className="flex justify-between items-start">
+              <div>
+                <h2 className="text-xl font-semibold text-gray-800">
+                  {user && profile ? `Olá, ${profile.full_name?.split(' ')[0] || 'Usuário'}!` : 'Olá, seja bem-vindo!'}
+                </h2>
+                <p className="text-gray-600">Encontre profissionais qualificados para seu evento ou estabelecimento</p>
+                <p className="text-gray-500 mt-1 text-sm">Ideal para restaurantes, buffets e eventos particulares</p>
+              </div>
+              
+              {/* Auth Section */}
+              <div className="flex items-center space-x-2">
+                {user && profile ? (
+                  <div className="flex items-center space-x-2">
+                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full capitalize">
+                      {profile.role}
+                    </span>
+                    <button
+                      onClick={() => signOut()}
+                      className="text-xs text-gray-500 hover:text-gray-700 flex items-center space-x-1"
+                    >
+                      <i className="fas fa-sign-out-alt"></i>
+                      <span>Sair</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => navigate('/auth/login')}
+                      className="text-xs text-gray-600 hover:text-gray-800 flex items-center space-x-1"
+                    >
+                      <i className="fas fa-sign-in-alt"></i>
+                      <span>Entrar</span>
+                    </button>
+                    <button
+                      onClick={() => navigate('/auth/register')}
+                      className="text-xs bg-gray-800 text-white px-2 py-1 rounded hover:bg-gray-900"
+                    >
+                      Cadastrar
+                    </button>
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
 
           {/* Search Bar */}
