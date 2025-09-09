@@ -1,0 +1,6 @@
+<svg width="180" height="180" viewBox="0 0 180 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="180" height="180" rx="20" fill="#3b82f6"/>
+  <path d="M45 135V90L90 45L135 90V135H112.5V112.5H67.5V135H45Z" fill="white" stroke="white" stroke-width="3" stroke-linejoin="round"/>
+  <circle cx="90" cy="75" r="7" fill="white"/>
+  <text x="90" y="160" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="14" font-weight="bold">GARÇOM</text>
+</svg>

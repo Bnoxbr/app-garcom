@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Eye, EyeOff, Mail, Lock, User, ArrowLeft, Users, Briefcase, Shield } from 'lucide-react'
+
 import { useAuth } from '../../hooks/useAuth'
 import type { UserRole } from '../../hooks/useAuth'
 import { Loading } from '../../components'
@@ -17,19 +17,19 @@ const userTypes: UserTypeOption[] = [
     value: 'client',
     label: 'Cliente',
     description: 'Contrato profissionais para eventos e estabelecimentos',
-    icon: <Users className="w-6 h-6" />
+    icon: <span className="text-2xl">👥</span>
   },
   {
     value: 'provider',
     label: 'Prestador',
     description: 'Ofereço serviços gastronômicos e de hospitalidade',
-    icon: <Briefcase className="w-6 h-6" />
+    icon: <span className="text-2xl">💼</span>
   },
   {
     value: 'establishment',
     label: 'Estabelecimento',
     description: 'Represento um restaurante ou empresa',
-    icon: <Shield className="w-6 h-6" />
+    icon: <span className="text-2xl">🛡️</span>
   }
 ]
 
@@ -134,7 +134,7 @@ const Register: React.FC = () => {
             onClick={() => step === 'form' ? setStep('userType') : navigate('/')}
             className="inline-flex items-center text-gray-600 hover:text-gray-800 mb-6 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <span className="mr-2">←</span>
             {step === 'form' ? 'Voltar' : 'Voltar ao início'}
           </button>
           
@@ -185,7 +185,7 @@ const Register: React.FC = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <User className="h-5 w-5 text-gray-400" />
+                    <span className="text-gray-400">👤</span>
                   </div>
                   <input
                     id="fullName"
@@ -208,7 +208,7 @@ const Register: React.FC = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Mail className="h-5 w-5 text-gray-400" />
+                    <span className="text-gray-400">📧</span>
                   </div>
                   <input
                     id="email"
@@ -231,7 +231,7 @@ const Register: React.FC = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
+                    <span className="text-gray-400">🔒</span>
                   </div>
                   <input
                     id="password"
@@ -249,11 +249,7 @@ const Register: React.FC = () => {
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                     onClick={() => setShowPassword(!showPassword)}
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                    )}
+                    <span className="text-gray-400 hover:text-gray-600">{showPassword ? '🙈' : '👁️'}</span>
                   </button>
                 </div>
               </div>
@@ -265,7 +261,7 @@ const Register: React.FC = () => {
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <Lock className="h-5 w-5 text-gray-400" />
+                    <span className="text-gray-400">🔒</span>
                   </div>
                   <input
                     id="confirmPassword"
@@ -283,11 +279,7 @@ const Register: React.FC = () => {
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   >
-                    {showConfirmPassword ? (
-                      <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                    ) : (
-                      <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                    )}
+                    <span className="text-gray-400 hover:text-gray-600">{showConfirmPassword ? '🙈' : '👁️'}</span>
                   </button>
                 </div>
               </div>

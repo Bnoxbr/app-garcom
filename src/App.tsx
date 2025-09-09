@@ -1,7 +1,7 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './hooks/useAuth';
-import { ProtectedRoute } from './components';
+import { ProtectedRoute, PWAUpdatePrompt, OfflineNotification } from './components';
 
 // Importar as páginas migradas
 import ProviderProfile from './pages/provider/ProviderProfile';
@@ -22,6 +22,7 @@ const App: React.FC = () => {
   return (
     <AuthProvider>
       <div className="min-h-screen bg-gray-50">
+        <OfflineNotification />
         <Routes>
             {/* Rotas públicas */}
             <Route path="/" element={<Home />} />
@@ -189,6 +190,7 @@ const App: React.FC = () => {
             {/* Rota 404 - redireciona para home */}
             <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
+        <PWAUpdatePrompt />
       </div>
     </AuthProvider>
   );

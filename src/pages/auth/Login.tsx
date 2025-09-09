@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { Eye, EyeOff, Mail, Lock, ArrowLeft } from 'lucide-react'
+
 import { useAuth } from '../../hooks/useAuth'
 import { Loading } from '../../components'
 
@@ -67,7 +67,7 @@ const Login: React.FC = () => {
             onClick={() => navigate('/')}
             className="inline-flex items-center text-gray-600 hover:text-gray-800 mb-6 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <span className="mr-2">←</span>
             Voltar ao início
           </button>
           
@@ -89,7 +89,7 @@ const Login: React.FC = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <span className="text-gray-400">📧</span>
                 </div>
                 <input
                   id="email"
@@ -112,7 +112,7 @@ const Login: React.FC = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Lock className="h-5 w-5 text-gray-400" />
+                  <span className="text-gray-400">🔒</span>
                 </div>
                 <input
                   id="password"
@@ -130,11 +130,7 @@ const Login: React.FC = () => {
                   className="absolute inset-y-0 right-0 pr-3 flex items-center"
                   onClick={() => setShowPassword(!showPassword)}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400 hover:text-gray-600" />
-                  )}
+                  <span className="text-gray-400 hover:text-gray-600">{showPassword ? '🙈' : '👁️'}</span>
                 </button>
               </div>
             </div>

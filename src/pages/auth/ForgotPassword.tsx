@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { Mail, ArrowLeft, CheckCircle } from 'lucide-react'
+
 import { useAuth } from '../../hooks/useAuth'
 import { Loading } from '../../components'
 
@@ -59,7 +59,7 @@ const ForgotPassword: React.FC = () => {
         <div className="max-w-md w-full space-y-8">
           <div className="text-center">
             <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-6">
-              <CheckCircle className="h-8 w-8 text-green-600" />
+              <span className="text-green-600 text-4xl">✅</span>
             </div>
             
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
@@ -103,7 +103,7 @@ const ForgotPassword: React.FC = () => {
             onClick={() => navigate('/auth/login')}
             className="inline-flex items-center text-gray-600 hover:text-gray-800 mb-6 transition-colors"
           >
-            <ArrowLeft className="w-4 h-4 mr-2" />
+            <span className="mr-2">←</span>
             Voltar ao login
           </button>
           
@@ -125,7 +125,7 @@ const ForgotPassword: React.FC = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Mail className="h-5 w-5 text-gray-400" />
+                  <span className="text-gray-400">📧</span>
                 </div>
                 <input
                   id="email"
