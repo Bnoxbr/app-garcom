@@ -62,6 +62,9 @@ CREATE TABLE IF NOT EXISTS profiles (
   phone VARCHAR(20),
   address TEXT,
   bio TEXT,
+  role VARCHAR(20) DEFAULT 'client' CHECK (role IN ('client', 'provider', 'admin')),
+  document VARCHAR(20),
+  document_type VARCHAR(10) CHECK (document_type IN ('cpf', 'cnpj')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
@@ -90,12 +93,36 @@ CREATE TABLE IF NOT EXISTS bookings (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Tabela de pagamentos
+CREATE TABLE IF NOT EXISTS payments (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  booking_id UUID REFERENCES bookings(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  amount DECIMAL(10,2) NOT NULL,
+  method VARCHAR(20) NOT NULL CHECK (method IN ('pix', 'credit_card', 'debit_card', 'bitcoin')),
+  status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'cancelled')),
+  transaction_id VARCHAR(100),
+  payment_url TEXT,
+  qr_code TEXT,
+  customer_name VARCHAR(200),
+  customer_email VARCHAR(255),
+  customer_document VARCHAR(20),
+  description TEXT,
+  processed_at TIMESTAMP WITH TIME ZONE,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
 -- Índices para melhor performance
 CREATE INDEX IF NOT EXISTS idx_professionals_category ON professionals(category);
 CREATE INDEX IF NOT EXISTS idx_professionals_available ON professionals(available);
 CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON bookings(user_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_professional_id ON bookings(professional_id);
 CREATE INDEX IF NOT EXISTS idx_bookings_status ON bookings(status);
+CREATE INDEX IF NOT EXISTS idx_payments_user_id ON payments(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_booking_id ON payments(booking_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status);
+CREATE INDEX IF NOT EXISTS idx_payments_method ON payments(method);
 
 -- Função para atualizar updated_at automaticamente
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -142,6 +169,7 @@ CREATE TRIGGER update_professionals_updated_at BEFORE UPDATE ON professionals FO
 CREATE TRIGGER update_profiles_updated_at BEFORE UPDATE ON profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_bookings_updated_at BEFORE UPDATE ON bookings FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_payments_updated_at BEFORE UPDATE ON payments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Políticas RLS (Row Level Security)
 ALTER TABLE regioes ENABLE ROW LEVEL SECURITY;
@@ -151,6 +179,7 @@ ALTER TABLE professionals ENABLE ROW LEVEL SECURITY;
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE payments ENABLE ROW LEVEL SECURITY;
 
 -- Políticas para regioes (leitura pública)
 CREATE POLICY "Regiões são visíveis para todos" ON regioes FOR SELECT USING (true);
@@ -179,3 +208,8 @@ CREATE POLICY "Usuários podem ver seus próprios agendamentos" ON bookings FOR 
 CREATE POLICY "Usuários podem criar agendamentos" ON bookings FOR INSERT WITH CHECK (auth.uid() = user_id);
 CREATE POLICY "Usuários podem atualizar seus próprios agendamentos" ON bookings FOR UPDATE USING (auth.uid() = user_id);
 CREATE POLICY "Usuários podem deletar seus próprios agendamentos" ON bookings FOR DELETE USING (auth.uid() = user_id);
+
+-- Políticas para payments (usuários podem ver e gerenciar apenas seus próprios pagamentos)
+CREATE POLICY "Usuários podem ver seus próprios pagamentos" ON payments FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Usuários podem criar pagamentos" ON payments FOR INSERT WITH CHECK (auth.uid() = user_id);
+CREATE POLICY "Usuários podem atualizar seus próprios pagamentos" ON payments FOR UPDATE USING (auth.uid() = user_id);

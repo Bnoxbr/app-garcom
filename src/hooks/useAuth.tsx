@@ -13,6 +13,8 @@ export interface UserProfile {
   bio?: string
   role: UserRole
   email: string
+  document?: string
+  document_type?: 'cpf' | 'cnpj'
   created_at: string
   updated_at: string
 }
@@ -26,7 +28,7 @@ export interface AuthState {
 }
 
 export interface AuthContextType extends AuthState {
-  signUp: (email: string, password: string, role: UserRole, fullName?: string) => Promise<{ error: AuthError | null }>
+  signUp: (email: string, password: string, role: UserRole, fullName?: string, document?: string, documentType?: 'cpf' | 'cnpj') => Promise<{ error: AuthError | null }>
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
   signOut: () => Promise<{ error: AuthError | null }>
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>
@@ -108,7 +110,7 @@ export const useAuth = () => {
     }
   }
 
-  const signUp = async (email: string, password: string, role: UserRole, fullName?: string) => {
+  const signUp = async (email: string, password: string, role: UserRole, fullName?: string, document?: string, documentType?: 'cpf' | 'cnpj') => {
     try {
       setLoading(true)
       setError(null)
@@ -119,7 +121,9 @@ export const useAuth = () => {
         options: {
           data: {
             full_name: fullName,
-            role: role
+            role: role,
+            document: document,
+            document_type: documentType
           }
         }
       })
@@ -134,6 +138,8 @@ export const useAuth = () => {
             id: data.user.id,
             full_name: fullName,
             role: role,
+            document: document,
+            document_type: documentType,
             created_at: new Date().toISOString(),
             updated_at: new Date().toISOString()
           })

@@ -102,8 +102,19 @@ const Home: React.FC = () => {
 
   return (
     <div className="relative min-h-screen text-gray-800 pb-24 bg-gray-100">
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-50 to-gray-200"></div>
-      <div className="relative z-1">
+      {/* Animated Background with Parallax Effect */}
+      <div className="absolute inset-0 animated-background parallax-light"></div>
+      
+      {/* Floating Particles */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        <div className="particle floating-element"></div>
+        <div className="particle floating-element"></div>
+        <div className="particle floating-element"></div>
+        <div className="particle floating-element"></div>
+        <div className="particle floating-element"></div>
+      </div>
+      
+      <div className="relative z-10 fade-in">
         {/* Main Content */}
         <div className="px-4 relative z-10">
           {/* Welcome Section */}
@@ -154,11 +165,11 @@ const Home: React.FC = () => {
           </div>
 
           {/* Search Bar */}
-          <div className="relative mb-6">
+          <div className="relative mb-6 slide-up">
             <input
               type="text"
               placeholder="Buscar garçons, cozinheiros, recepcionistas..."
-              className="w-full py-3 px-4 pr-10 rounded-lg bg-white shadow-sm border-none text-sm"
+              className="w-full py-3 px-4 pr-10 rounded-lg bg-white shadow-sm border-none text-sm smooth-transition focus:shadow-lg focus:scale-[1.02]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
@@ -270,9 +281,9 @@ const Home: React.FC = () => {
           </div>
 
           {/* Categories */}
-          <div className="mb-6">
+          <div className="mb-6 slide-up">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-semibold text-gray-800">Categorias</h3>
+              <h3 className="text-lg font-semibold text-gray-800 gentle-pulse">Categorias</h3>
             <span className="text-sm text-gray-600">{filteredProfessionals.length} profissionais encontrados</span>
             </div>
             <div className="flex overflow-x-auto pb-2 space-x-3 relative">
@@ -283,17 +294,18 @@ const Home: React.FC = () => {
               )}
               <div
                 id="category-todos"
-                className={`flex flex-col items-center justify-center min-w-[80px] p-3 rounded-lg cursor-pointer ${selectedCategory === 'Todos' ? 'bg-gray-800 text-white' : 'bg-white shadow-sm'} ${isPulsing && selectedCategory === 'Todos' ? 'animate-pulse' : ''}`}
+                className={`flex flex-col items-center justify-center min-w-[80px] p-3 rounded-lg cursor-pointer smooth-hover stagger-animation ${selectedCategory === 'Todos' ? 'bg-gray-800 text-white' : 'bg-white shadow-sm'} ${isPulsing && selectedCategory === 'Todos' ? 'animate-pulse' : ''}`}
                 onClick={() => handleCategoryClick('Todos')}
               >
                 <i className="fas fa-border-all text-xl mb-1"></i>
                 <span className="text-xs whitespace-nowrap overflow-hidden text-overflow-ellipsis">Todos</span>
               </div>
-              {categories.map(category => (
+              {categories.map((category, index) => (
                 <div
                   key={category.id}
                   id={`category-${category.id}`}
-                  className={`flex flex-col items-center justify-center min-w-[80px] p-3 rounded-lg cursor-pointer ${selectedCategory === category.name ? 'bg-gray-800 text-white' : 'bg-white shadow-sm'} ${isPulsing && selectedCategory === category.name ? 'animate-pulse' : ''}`}
+                  className={`flex flex-col items-center justify-center min-w-[80px] p-3 rounded-lg cursor-pointer smooth-hover stagger-animation ${selectedCategory === category.name ? 'bg-gray-800 text-white' : 'bg-white shadow-sm'} ${isPulsing && selectedCategory === category.name ? 'animate-pulse' : ''}`}
+                  style={{ animationDelay: `${(index + 1) * 0.1}s` }}
                   onClick={() => handleCategoryClick(category.name)}
                 >
                   <i className={`${category.icon} text-xl mb-1`}></i>
@@ -304,10 +316,10 @@ const Home: React.FC = () => {
           </div>
 
           {/* Service Auction Button */}
-          <div className="mb-6">
+          <div className="mb-6 slide-up">
             <button 
               onClick={() => navigate('/auctions')}
-              className="w-full py-3 px-4 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg shadow-sm transition-colors duration-200 flex items-center justify-center space-x-2 cursor-pointer"
+              className="w-full py-3 px-4 bg-gray-200 hover:bg-gray-300 text-gray-900 rounded-lg shadow-sm smooth-transition card-hover flex items-center justify-center space-x-2 cursor-pointer"
             >
               <i className="fas fa-gavel text-lg"></i>
               <span className="font-medium">Leilão de Serviços</span>
@@ -323,12 +335,12 @@ const Home: React.FC = () => {
         </div>
 
         {/* Tab Bar */}
-        <div className="fixed bottom-4 left-4 right-4 bg-white rounded-2xl shadow-lg z-10 border border-gray-100">
+        <div className="fixed bottom-4 left-4 right-4 bg-white rounded-2xl shadow-lg z-10 border border-gray-100 smooth-transition">
           <div className="grid grid-cols-5 h-16">
             <button
               id="homeButton"
               onClick={handleHomeRefresh}
-              className="flex flex-col items-center justify-center text-gray-800 cursor-pointer relative rounded-2xl"
+              className="flex flex-col items-center justify-center text-gray-800 cursor-pointer relative rounded-2xl smooth-hover"
             >
               {isRefreshing ? (
                 <i className="fas fa-spinner fa-spin text-lg"></i>
@@ -339,28 +351,28 @@ const Home: React.FC = () => {
             </button>
             <button 
               onClick={() => navigate('/search')}
-              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer rounded-2xl"
+              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer rounded-2xl smooth-hover"
             >
               <i className="fas fa-search text-lg"></i>
               <span className="text-xs mt-1">Buscar</span>
             </button>
             <button 
               onClick={() => navigate('/auctions')}
-              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer rounded-2xl"
+              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer rounded-2xl smooth-hover"
             >
               <i className="fas fa-gavel text-lg"></i>
               <span className="text-xs mt-1">Leilão</span>
             </button>
             <button 
               onClick={() => navigate('/chat')}
-              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer rounded-2xl"
+              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer rounded-2xl smooth-hover"
             >
               <i className="fas fa-comment-alt text-lg"></i>
               <span className="text-xs mt-1">Chat</span>
             </button>
             <button 
               onClick={() => navigate('/profile')}
-              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer rounded-2xl"
+              className="flex flex-col items-center justify-center text-gray-500 cursor-pointer rounded-2xl smooth-hover"
             >
               <i className="fas fa-building text-lg"></i>
               <span className="text-xs mt-1">Perfil</span>
@@ -371,29 +383,29 @@ const Home: React.FC = () => {
         {/* Floating Action Button and Menu */}
         <div className="fixed right-4 bottom-20 flex flex-col items-end">
           {showFloatingMenu && (
-            <div className="mb-4 bg-white rounded-lg shadow-xl overflow-hidden">
+            <div className="mb-4 bg-white rounded-lg shadow-xl overflow-hidden fade-in">
               <div className="py-2">
                 <button
                   onClick={() => alert('Solicitar profissional em desenvolvimento')}
-                  className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer w-full text-left">
+                  className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer w-full text-left smooth-transition">
                   <i className="fas fa-utensils w-6 text-gray-600"></i>
                   <span className="ml-3 text-gray-700">Solicitar profissional</span>
                 </button>
                 <button
                   onClick={() => alert('Criar evento/festa em desenvolvimento')}
-                  className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer w-full text-left">
+                  className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer w-full text-left smooth-transition">
                   <i className="fas fa-calendar-day w-6 text-gray-600"></i>
                   <span className="ml-3 text-gray-700">Criar evento/festa</span>
                 </button>
                 <button
                   onClick={() => alert('Cadastrar estabelecimento em desenvolvimento')}
-                  className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer w-full text-left">
+                  className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer w-full text-left smooth-transition">
                   <i className="fas fa-store w-6 text-gray-600"></i>
                   <span className="ml-3 text-gray-700">Cadastrar estabelecimento</span>
                 </button>
                 <button
                   onClick={() => navigate('/provider/profile')}
-                  className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer w-full text-left">
+                  className="flex items-center px-4 py-3 hover:bg-gray-50 cursor-pointer w-full text-left smooth-transition">
                   <i className="fas fa-user-tie w-6 text-gray-600"></i>
                   <span className="ml-3 text-gray-700">Cadastrar como profissional</span>
                 </button>
@@ -403,7 +415,7 @@ const Home: React.FC = () => {
           <button
             id="floatingActionButton"
             onClick={() => setShowFloatingMenu(!showFloatingMenu)}
-            className={`bg-gray-800 text-white p-4 rounded-full shadow-lg cursor-pointer transition-transform duration-200 ${showFloatingMenu ? 'rotate-45' : ''}`}>
+            className={`bg-gray-800 text-white p-4 rounded-full shadow-lg cursor-pointer smooth-transition card-hover ${showFloatingMenu ? 'rotate-45' : ''}`}>
             <i className="fas fa-plus text-xl"></i>
           </button>
         </div>
