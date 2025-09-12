@@ -38,7 +38,7 @@ const ForgotPassword: React.FC = () => {
       } else {
         setIsSuccess(true)
       }
-    } catch (err) {
+    } catch {
       setError('Erro inesperado. Tente novamente.')
     } finally {
       setIsSubmitting(false)

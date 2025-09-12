@@ -10,7 +10,7 @@ const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
   className = '', 
   variant = 'primary' 
 }) => {
-  const { canInstall, installApp, isInstalled, isOnline } = usePWA();
+  const { canInstall, installApp, isInstalled, isOnline, showAutomaticBanner, setShowAutomaticBanner } = usePWA();
   const [isInstalling, setIsInstalling] = useState(false);
 
   const handleInstall = async () => {
@@ -66,6 +66,19 @@ const PWAInstallButton: React.FC<PWAInstallButtonProps> = ({
         <span className={isOnline ? 'text-green-600' : 'text-red-600'}>
           {isOnline ? 'Online' : 'Offline'}
         </span>
+      </div>
+
+      {/* Configuração do banner automático */}
+      <div className="flex items-center space-x-2 text-sm">
+        <label className="flex items-center cursor-pointer">
+          <input
+            type="checkbox"
+            checked={showAutomaticBanner}
+            onChange={(e) => setShowAutomaticBanner(e.target.checked)}
+            className="mr-2 rounded"
+          />
+          <span className="text-gray-600">Banner automático</span>
+        </label>
       </div>
 
       {/* Botão de instalação */}

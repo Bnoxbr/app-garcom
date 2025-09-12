@@ -15,6 +15,8 @@ interface UsePWAReturn {
   isOnline: boolean;
   installApp: () => Promise<void>;
   canInstall: boolean;
+  showAutomaticBanner: boolean;
+  setShowAutomaticBanner: (show: boolean) => void;
 }
 
 export const usePWA = (): UsePWAReturn => {
@@ -22,6 +24,7 @@ export const usePWA = (): UsePWAReturn => {
   const [isInstalled, setIsInstalled] = useState(false);
   const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [deferredPrompt, setDeferredPrompt] = useState<PWAInstallPrompt | null>(null);
+  const [showAutomaticBanner, setShowAutomaticBanner] = useState(true);
 
   useEffect(() => {
     // Verificar se o app já está instalado
@@ -35,7 +38,10 @@ export const usePWA = (): UsePWAReturn => {
 
     // Listener para o evento beforeinstallprompt
     const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
+      // Só previne o banner automático se quisermos controle manual
+      if (!showAutomaticBanner) {
+        e.preventDefault();
+      }
       setDeferredPrompt(e as PWAInstallPrompt);
       setIsInstallable(true);
     };
@@ -96,7 +102,9 @@ export const usePWA = (): UsePWAReturn => {
     isInstalled,
     isOnline,
     installApp,
-    canInstall
+    canInstall,
+    showAutomaticBanner,
+    setShowAutomaticBanner
   };
 };
 

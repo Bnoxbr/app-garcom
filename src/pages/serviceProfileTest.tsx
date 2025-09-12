@@ -2,6 +2,11 @@
 
 import React, { useState } from 'react';
 
+interface TimeSlot {
+  time: string;
+  available: boolean;
+}
+
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('sobre');
   const [showFullBio, setShowFullBio] = useState(false);
@@ -454,7 +459,7 @@ const App: React.FC = () => {
                 </div>
 
                 <div className="space-y-3">
-                  {availabilityData[selectedDay as keyof typeof availabilityData].map((slot: any, index: number) => (
+                  {availabilityData[selectedDay as keyof typeof availabilityData].map((slot: TimeSlot, index: number) => (
                     <div key={index} className="flex items-center justify-between p-3 rounded-lg border border-gray-200">
                       <div className="flex items-center">
                         <i className={`fas fa-clock mr-3 ${slot.available ? 'text-green-500' : 'text-red-500'}`}></i>

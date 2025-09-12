@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useProfessionals } from '../hooks/useProfessionals'
 import { useCategories } from '../hooks/useCategories'
 import { useAuthContext, useAuth } from '../hooks/useAuth'
-import { Loading, ErrorMessage, ProfessionalsGrid } from '../components'
+import { Loading, ErrorMessage, ProfessionalsGrid, PWAInstallButton } from '../components'
 
 
 const Home: React.FC = () => {
@@ -17,19 +17,7 @@ const Home: React.FC = () => {
   const { professionals, loading: professionalsLoading, error: professionalsError, refetch: refetchProfessionals } = useProfessionals();
   const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategories();
 
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const profileButton = document.getElementById('profileButton');
-      const isClickInsideButton = profileButton?.contains(event.target as Node);
-      if (!isClickInsideButton) {
-        setShowProfileMenu(false);
-      }
-    };
-    document.addEventListener('click', handleClickOutside);
-    return () => {
-      document.removeEventListener('click', handleClickOutside);
-    };
-  }, []);
+
 
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
@@ -38,7 +26,7 @@ const Home: React.FC = () => {
   const [showToast, setShowToast] = useState(false);
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showFloatingMenu, setShowFloatingMenu] = useState(false);
-  const [_showProfileMenu, setShowProfileMenu] = useState(false);
+
 
   const [filters, setFilters] = useState({
     distance: '0-5',
@@ -70,11 +58,45 @@ const Home: React.FC = () => {
 
   // Dados agora vêm dos hooks do Supabase
 
-  const filteredProfessionals = professionals.filter(professional =>
-    (selectedCategory === 'Todos' || professional.category.includes(selectedCategory)) &&
-    (professional.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      professional.category.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredProfessionals = professionals.filter(professional => {
+    // Filtro por categoria
+    const categoryMatch = selectedCategory === 'Todos' || professional.category.includes(selectedCategory);
+    
+    // Filtro por termo de busca
+    const searchMatch = professional.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      professional.category.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Filtro por distância
+    let distanceMatch = true;
+    if (professional.distance) {
+      const distance = parseFloat(professional.distance.replace(/[^0-9.]/g, ''));
+      switch (filters.distance) {
+        case '0-5':
+          distanceMatch = distance <= 5;
+          break;
+        case '5-10':
+          distanceMatch = distance > 5 && distance <= 10;
+          break;
+        case '10-15':
+          distanceMatch = distance > 10 && distance <= 15;
+          break;
+        case '15+':
+          distanceMatch = distance > 15;
+          break;
+      }
+    }
+    
+    // Filtro por disponibilidade
+    let availabilityMatch = true;
+    if (filters.availability !== 'qualquer') {
+      availabilityMatch = professional.available;
+    }
+    
+    // Filtro por rating
+    const ratingMatch = professional.rating >= parseFloat(filters.rating);
+    
+    return categoryMatch && searchMatch && distanceMatch && availabilityMatch && ratingMatch;
+  });
 
   // Verificar se há erros
   if (professionalsError || categoriesError) {
@@ -126,6 +148,11 @@ const Home: React.FC = () => {
                 </h2>
                 <p className="text-gray-600">Encontre profissionais qualificados para seu evento ou estabelecimento</p>
                 <p className="text-gray-500 mt-1 text-sm">Ideal para restaurantes, buffets e eventos particulares</p>
+              </div>
+              
+              {/* PWA Install Button */}
+              <div className="mb-4">
+                <PWAInstallButton variant="minimal" />
               </div>
               
               {/* Auth Section */}

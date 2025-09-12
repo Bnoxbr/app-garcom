@@ -1,4 +1,6 @@
-// Types for the application
+// Types for Mr. Staffer - Two-sided marketplace for hospitality services
+
+export type UserRole = 'contratante' | 'prestador' | 'admin'
 
 export interface Regiao {
   id: string
@@ -18,44 +20,91 @@ export interface Category {
   updated_at?: string
 }
 
-export interface Experience {
+// Especialidades de hospitalidade
+export interface Specialty {
   id: string
-  titulo: string
-  descricao?: string
-  preco?: number
-  duracao?: number // em minutos
-  regiao_id?: string
-  categoria_id?: string
-  imagem_url?: string
-  rating: number
-  total_avaliacoes: number
-  ativo: boolean
-  featured: boolean
-  created_at?: string
-  updated_at?: string
+  name: string
+  category: 'garcom' | 'chef' | 'bartender' | 'sommelier' | 'copeiro' | 'auxiliar_cozinha'
+  description?: string
 }
 
+// Dados bancários
+export interface BankingData {
+  pix_key?: string
+  pix_type?: 'cpf' | 'cnpj' | 'email' | 'phone' | 'random'
+  bitcoin_address?: string
+  bank_name?: string
+  bank_agency?: string
+  bank_account?: string
+  bank_account_type?: 'corrente' | 'poupanca'
+}
+
+// Endereço completo
+export interface Address {
+  cep: string
+  street: string
+  number: string
+  complement?: string
+  neighborhood: string
+  city: string
+  state: string
+  country: string
+}
+
+// Profissional atualizado para Mr. Staffer
 export interface Professional {
   id: string
   name: string
   category: string
+  specialties?: string[]
   rating: number
-  distance: string
+  reviews: number
+  distance?: string
   available: boolean
-  image_url?: string
+  image?: string
+  price?: string
+  description?: string
   created_at?: string
   updated_at?: string
 }
 
+// Profile expandido para Mr. Staffer
 export interface Profile {
   id: string
-  full_name?: string
+  full_name: string
+  email: string
+  role: UserRole
   avatar_url?: string
   phone?: string
-  address?: string
   bio?: string
-  created_at?: string
-  updated_at?: string
+
+  // Documentação
+  document: string
+  document_type: 'cpf' | 'cnpj'
+  mei_number?: string
+
+  // Endereço
+  address?: Address
+
+  // Para prestadores
+  specialties?: string[]
+  hourly_rate?: number
+  experience_years?: number
+  portfolio_images?: string[]
+
+  // Dados bancários
+  banking_data?: BankingData
+
+  // Avaliações
+  rating?: number
+  reviews_count?: number
+
+  // Status
+  verified: boolean
+  available: boolean
+
+  created_at: string
+  updated_at: string
 }
 
 export interface User {

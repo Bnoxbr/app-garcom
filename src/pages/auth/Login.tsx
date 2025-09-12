@@ -41,7 +41,7 @@ const Login: React.FC = () => {
         // Redirect to intended page or home
         navigate(from, { replace: true })
       }
-    } catch (err) {
+    } catch {
       setError('Erro inesperado. Tente novamente.')
     } finally {
       setIsSubmitting(false)

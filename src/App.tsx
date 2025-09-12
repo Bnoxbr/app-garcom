@@ -1,10 +1,11 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { AuthProvider } from './hooks/useAuth';
+import { AuthProvider, useAuthContext } from './hooks/useAuth';
 import { ProtectedRoute, PWAUpdatePrompt, OfflineNotification } from './components';
 
 // Importar as páginas migradas
 import ProviderProfile from './pages/provider/ProviderProfile';
+import ProfessionalProfile from './pages/provider/ProfessionalProfile';
 import ClientProfile from './pages/client/ClientProfile';
 import Chat from './pages/shared/Chat';
 import AdvancedSearch from './pages/shared/AdvancedSearch';
@@ -18,6 +19,23 @@ import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import ForgotPassword from './pages/auth/ForgotPassword';
 
+// Componente para redirecionar baseado no role do usuário
+const ProfileRedirect: React.FC = () => {
+  const { profile } = useAuthContext()
+  
+  if (!profile) {
+    return <div>Carregando...</div>
+  }
+  
+  const roleRedirects = {
+    contratante: '/client/profile',
+    prestador: '/provider/profile',
+    admin: '/admin/dashboard'
+  }
+  
+  return <Navigate to={roleRedirects[profile.role] || '/'} replace />
+}
+
 const App: React.FC = () => {
   return (
     <AuthProvider>
@@ -29,6 +47,7 @@ const App: React.FC = () => {
             <Route path="/home" element={<Home />} />
             <Route path="/search" element={<AdvancedSearch />} />
             <Route path="/advanced-search" element={<AdvancedSearch />} />
+            <Route path="/professional/:id" element={<ProfessionalProfile />} />
             
             {/* Rotas de autenticação */}
             <Route path="/auth/login" element={<Login />} />
@@ -39,7 +58,7 @@ const App: React.FC = () => {
             <Route 
               path="/provider/profile" 
               element={
-                <ProtectedRoute requiredRoles={['provider']}>
+                <ProtectedRoute requiredRoles={['prestador']}>
                   <ProviderProfile />
                 </ProtectedRoute>
               } 
@@ -47,7 +66,7 @@ const App: React.FC = () => {
             <Route 
               path="/provider/dashboard" 
               element={
-                <ProtectedRoute requiredRoles={['provider']}>
+                <ProtectedRoute requiredRoles={['prestador']}>
                   <div>Provider Dashboard</div>
                 </ProtectedRoute>
               } 
@@ -57,7 +76,7 @@ const App: React.FC = () => {
             <Route 
               path="/client/profile" 
               element={
-                <ProtectedRoute requiredRoles={['client']}>
+                <ProtectedRoute requiredRoles={['contratante']}>
                   <ClientProfile />
                 </ProtectedRoute>
               } 
@@ -65,15 +84,15 @@ const App: React.FC = () => {
             <Route 
               path="/profile" 
               element={
-                <ProtectedRoute requiredRoles={['client']}>
-                  <ClientProfile />
+                <ProtectedRoute>
+                  <ProfileRedirect />
                 </ProtectedRoute>
               } 
             />
             <Route 
               path="/client/dashboard" 
               element={
-                <ProtectedRoute requiredRoles={['client']}>
+                <ProtectedRoute requiredRoles={['contratante']}>
                   <div>Client Dashboard</div>
                 </ProtectedRoute>
               } 
@@ -93,7 +112,7 @@ const App: React.FC = () => {
             <Route 
               path="/establishment/dashboard" 
               element={
-                <ProtectedRoute requiredRoles={['establishment']}>
+                <ProtectedRoute requiredRoles={['admin']}>
                   <div>Establishment Dashboard</div>
                 </ProtectedRoute>
               } 

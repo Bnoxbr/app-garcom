@@ -1,4 +1,4 @@
--- Dados de exemplo para popular o banco de dados
+-- Dados de exemplo para Mr. Staffer - Marketplace de Hospitalidade
 
 -- Inserir regiões
 INSERT INTO regioes (nome, descricao, imagem_url) VALUES
@@ -7,33 +7,248 @@ INSERT INTO regioes (nome, descricao, imagem_url) VALUES
 ('Bairro Boêmio', 'Região conhecida pela gastronomia e entretenimento', 'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=400&h=300&fit=crop'),
 ('Distrito Gastronômico', 'Centro culinário da cidade com os melhores restaurantes', 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop');
 
--- Inserir categorias
-INSERT INTO categories (name, icon) VALUES
-('Garçom', '🍽️'),
-('Bartender', '🍸'),
-('Chef', '👨‍🍳'),
-('Sommelier', '🍷'),
-('Copeiro', '☕'),
-('Auxiliar de Cozinha', '🥄');
+-- Inserir categorias de hospitalidade
+INSERT INTO categories (id, name, icon) VALUES
+('garcom', 'Garçom', '🍽️'),
+('chef', 'Chef de Cozinha', '👨‍🍳'),
+('bartender', 'Bartender', '🍸'),
+('sommelier', 'Sommelier', '🍷'),
+('copeiro', 'Copeiro', '☕'),
+('auxiliar_cozinha', 'Auxiliar de Cozinha', '🥄'),
+('maitre', 'Maître', '🎩'),
+('hostess', 'Hostess', '💁‍♀️'),
+('limpeza', 'Limpeza', '🧹'),
+('seguranca', 'Segurança', '🛡️')
+ON CONFLICT (id) DO UPDATE SET
+  name = EXCLUDED.name,
+  icon = EXCLUDED.icon;
 
--- Inserir profissionais de exemplo
-INSERT INTO professionals (name, category, rating, reviews, distance, available, image, description, price) VALUES
-('Carlos Silva', 'Garçom', 4.8, 127, '2.3 km', true, 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face', 'Garçom experiente com 8 anos de experiência em eventos corporativos e casamentos.', 'R$ 80/hora'),
-('Ana Santos', 'Bartender', 4.9, 89, '1.8 km', true, 'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face', 'Bartender especializada em coquetéis clássicos e autorais.', 'R$ 90/hora'),
-('João Oliveira', 'Chef', 4.7, 156, '3.1 km', false, 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face', 'Chef com especialização em culinária brasileira e internacional.', 'R$ 120/hora'),
-('Maria Costa', 'Garçom', 4.6, 94, '1.5 km', true, 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face', 'Garçom atenciosa com experiência em eventos sociais e corporativos.', 'R$ 75/hora'),
-('Pedro Almeida', 'Sommelier', 4.9, 67, '4.2 km', true, 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face', 'Sommelier certificado com vasta experiência em vinhos nacionais e importados.', 'R$ 150/hora'),
-('Lucia Ferreira', 'Copeiro', 4.5, 78, '2.7 km', true, 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face', 'Copeira especializada em café gourmet e bebidas quentes.', 'R$ 60/hora'),
-('Roberto Lima', 'Auxiliar de Cozinha', 4.4, 45, '3.8 km', false, 'https://images.unsplash.com/photo-1507591064344-4c6ce005b128?w=150&h=150&fit=crop&crop=face', 'Auxiliar de cozinha com experiência em preparo de pratos executivos.', 'R$ 50/hora'),
-('Fernanda Rocha', 'Bartender', 4.8, 112, '2.1 km', true, 'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=150&h=150&fit=crop&crop=face', 'Bartender criativa especializada em drinks autorais e apresentações especiais.', 'R$ 95/hora'),
-('Marcos Souza', 'Garçom', 4.7, 134, '1.9 km', true, 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&crop=face', 'Garçom profissional com experiência em restaurantes fine dining.', 'R$ 85/hora'),
-('Camila Dias', 'Chef', 4.9, 203, '2.8 km', true, 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face', 'Chef especializada em culinária contemporânea e pratos veganos.', 'R$ 130/hora');
+-- Inserir prestadores de serviços de exemplo
+INSERT INTO profiles (
+  id, full_name, email, role, document, document_type, phone, bio, 
+  specialties, hourly_rate, experience_years, rating, reviews_count, 
+  verified, available, avatar_url,
+  address, banking_data,
+  created_at, updated_at
+) VALUES
+-- Prestadores
+(
+  '550e8400-e29b-41d4-a716-446655440001',
+  'Carlos Silva',
+  'carlos.silva@email.com',
+  'prestador',
+  '123.456.789-01',
+  'cpf',
+  '(11) 99999-0001',
+  'Garçom experiente com 8 anos de experiência em eventos corporativos e casamentos. Especializado em atendimento de alta qualidade.',
+  ARRAY['garcom'],
+  80.00,
+  8,
+  4.8,
+  127,
+  true,
+  true,
+  'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+  '{"cep": "01310-100", "street": "Av. Paulista", "number": "1000", "neighborhood": "Bela Vista", "city": "São Paulo", "state": "SP", "country": "Brasil"}',
+  '{"pix_key": "123.456.789-01", "pix_type": "cpf"}',
+  NOW(),
+  NOW()
+),
+(
+  '550e8400-e29b-41d4-a716-446655440002',
+  'Ana Santos',
+  'ana.santos@email.com',
+  'prestador',
+  '234.567.890-12',
+  'cpf',
+  '(11) 99999-0002',
+  'Bartender especializada em coquetéis clássicos e autorais. Formação em mixologia internacional.',
+  ARRAY['bartender'],
+  90.00,
+  6,
+  4.9,
+  89,
+  true,
+  true,
+  'https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face',
+  '{"cep": "22071-900", "street": "Av. Atlântica", "number": "500", "neighborhood": "Copacabana", "city": "Rio de Janeiro", "state": "RJ", "country": "Brasil"}',
+  '{"pix_key": "ana.santos@email.com", "pix_type": "email"}',
+  NOW(),
+  NOW()
+),
+(
+  '550e8400-e29b-41d4-a716-446655440003',
+  'João Oliveira',
+  'joao.oliveira@email.com',
+  'prestador',
+  '345.678.901-23',
+  'cpf',
+  '(11) 99999-0003',
+  'Chef com especialização em culinária brasileira e internacional. Graduado em Gastronomia.',
+  ARRAY['chef'],
+  120.00,
+  12,
+  4.7,
+  156,
+  true,
+  false,
+  'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face',
+  '{"cep": "04038-001", "street": "Rua dos Pinheiros", "number": "200", "neighborhood": "Pinheiros", "city": "São Paulo", "state": "SP", "country": "Brasil"}',
+  '{"pix_key": "(11) 99999-0003", "pix_type": "phone"}',
+  NOW(),
+  NOW()
+),
+(
+  '550e8400-e29b-41d4-a716-446655440004',
+  'Maria Costa',
+  'maria.costa@email.com',
+  'prestador',
+  '456.789.012-34',
+  'cpf',
+  '(11) 99999-0004',
+  'Garçom atenciosa com experiência em eventos sociais e corporativos. Especializada em fine dining.',
+  ARRAY['garcom'],
+  75.00,
+  5,
+  4.6,
+  94,
+  true,
+  true,
+  'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face',
+  '{"cep": "01310-200", "street": "Rua Augusta", "number": "300", "neighborhood": "Consolação", "city": "São Paulo", "state": "SP", "country": "Brasil"}',
+  '{"pix_key": "456.789.012-34", "pix_type": "cpf"}',
+  NOW(),
+  NOW()
+),
+(
+  '550e8400-e29b-41d4-a716-446655440005',
+  'Pedro Almeida',
+  'pedro.almeida@email.com',
+  'prestador',
+  '567.890.123-45',
+  'cpf',
+  '(11) 99999-0005',
+  'Sommelier certificado com vasta experiência em vinhos nacionais e importados. Curso na França.',
+  ARRAY['sommelier'],
+  150.00,
+  10,
+  4.9,
+  67,
+  true,
+  true,
+  'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face',
+  '{"cep": "01419-001", "street": "Rua Oscar Freire", "number": "100", "neighborhood": "Jardins", "city": "São Paulo", "state": "SP", "country": "Brasil"}',
+  '{"pix_key": "pedro.almeida@email.com", "pix_type": "email"}',
+  NOW(),
+  NOW()
+)
+ON CONFLICT (id) DO NOTHING;
 
--- Inserir experiências (usando IDs das regiões e categorias inseridas acima)
-INSERT INTO experiences (titulo, descricao, preco, duracao, regiao_id, categoria_id, imagem_url, rating, total_avaliacoes, featured) VALUES
-('Jantar Romântico com Chef Particular', 'Experiência gastronômica única com chef especializado preparando um menu degustação para duas pessoas.', 350.00, 180, (SELECT id FROM regioes WHERE nome = 'Centro Histórico' LIMIT 1), (SELECT id FROM categories WHERE name = 'Chef' LIMIT 1), 'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=400&h=300&fit=crop', 4.8, 45, true),
-('Coquetelaria Artesanal em Casa', 'Bartender profissional prepara drinks exclusivos no conforto da sua casa com ingredientes premium.', 280.00, 120, (SELECT id FROM regioes WHERE nome = 'Zona Sul' LIMIT 1), (SELECT id FROM categories WHERE name = 'Bartender' LIMIT 1), 'https://images.unsplash.com/photo-1551024506-0bccd828d307?w=400&h=300&fit=crop', 4.9, 67, true),
-('Serviço de Garçom para Eventos', 'Garçom experiente para atendimento em eventos corporativos e sociais com excelência no serviço.', 120.00, 240, (SELECT id FROM regioes WHERE nome = 'Bairro Boêmio' LIMIT 1), (SELECT id FROM categories WHERE name = 'Garçom' LIMIT 1), 'https://images.unsplash.com/photo-1559329007-40df8a9345d8?w=400&h=300&fit=crop', 4.7, 89, true),
-('Degustação de Vinhos com Sommelier', 'Experiência exclusiva de degustação com sommelier certificado e seleção de vinhos premium.', 450.00, 150, (SELECT id FROM regioes WHERE nome = 'Distrito Gastronômico' LIMIT 1), (SELECT id FROM categories WHERE name = 'Sommelier' LIMIT 1), 'https://images.unsplash.com/photo-1506377247377-2a5b3b417ebb?w=400&h=300&fit=crop', 4.9, 34, true),
-('Café Gourmet Experience', 'Serviço especializado de café gourmet com barista profissional e grãos selecionados.', 80.00, 60, (SELECT id FROM regioes WHERE nome = 'Centro Histórico' LIMIT 1), (SELECT id FROM categories WHERE name = 'Copeiro' LIMIT 1), 'https://images.unsplash.com/photo-1495474472287-4d71bcdd2085?w=400&h=300&fit=crop', 4.6, 78, true),
-('Aula de Culinária Particular', 'Chef ensina técnicas culinárias avançadas em aula particular personalizada.', 200.00, 180, (SELECT id FROM regioes WHERE nome = 'Distrito Gastronômico' LIMIT 1), (SELECT id FROM categories WHERE name = 'Chef' LIMIT 1), 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=400&h=300&fit=crop', 4.8, 56, false);
+-- Inserir contratantes de exemplo
+INSERT INTO profiles (
+  id, full_name, email, role, document, document_type, phone, 
+  verified, available,
+  created_at, updated_at
+) VALUES
+(
+  '550e8400-e29b-41d4-a716-446655440010',
+  'Empresa Eventos Ltda',
+  'contato@eventosltda.com',
+  'contratante',
+  '12.345.678/0001-90',
+  'cnpj',
+  '(11) 3333-0001',
+  true,
+  false,
+  NOW(),
+  NOW()
+),
+(
+  '550e8400-e29b-41d4-a716-446655440011',
+  'Restaurante Bella Vista',
+  'rh@bellavista.com',
+  'contratante',
+  '23.456.789/0001-01',
+  'cnpj',
+  '(11) 3333-0002',
+  true,
+  false,
+  NOW(),
+  NOW()
+),
+(
+  '550e8400-e29b-41d4-a716-446655440012',
+  'Fernanda Lima',
+  'fernanda.lima@email.com',
+  'contratante',
+  '789.012.345-67',
+  'cpf',
+  '(11) 99999-0012',
+  true,
+  false,
+  NOW(),
+  NOW()
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- Inserir bookings de exemplo
+INSERT INTO bookings (
+  id, client_id, provider_id, service_type, event_date, duration_hours, 
+  hourly_rate, total_amount, event_address, description, status,
+  client_rating, client_review, created_at, updated_at
+) VALUES
+(
+  '660e8400-e29b-41d4-a716-446655440001',
+  '550e8400-e29b-41d4-a716-446655440010',
+  '550e8400-e29b-41d4-a716-446655440001',
+  'garcom',
+  '2024-02-15 19:00:00+00',
+  6,
+  80.00,
+  480.00,
+  '{"street": "Rua das Flores, 123", "neighborhood": "Jardins", "city": "São Paulo", "state": "SP"}',
+  'Evento corporativo para 50 pessoas',
+  'completed',
+  5,
+  'Excelente profissional, muito atencioso e pontual.',
+  NOW() - INTERVAL '30 days',
+  NOW() - INTERVAL '25 days'
+),
+(
+  '660e8400-e29b-41d4-a716-446655440002',
+  '550e8400-e29b-41d4-a716-446655440011',
+  '550e8400-e29b-41d4-a716-446655440002',
+  'bartender',
+  '2024-02-20 20:00:00+00',
+  4,
+  90.00,
+  360.00,
+  '{"street": "Av. Paulista, 1000", "neighborhood": "Bela Vista", "city": "São Paulo", "state": "SP"}',
+  'Evento de lançamento de produto',
+  'completed',
+  5,
+  'Drinks incríveis, todos os convidados elogiaram!',
+  NOW() - INTERVAL '20 days',
+  NOW() - INTERVAL '15 days'
+),
+(
+  '660e8400-e29b-41d4-a716-446655440003',
+  '550e8400-e29b-41d4-a716-446655440012',
+  '550e8400-e29b-41d4-a716-446655440005',
+  'sommelier',
+  '2024-03-01 19:30:00+00',
+  3,
+  150.00,
+  450.00,
+  '{"street": "Rua Oscar Freire, 500", "neighborhood": "Jardins", "city": "São Paulo", "state": "SP"}',
+  'Jantar íntimo com degustação de vinhos',
+  'pending',
+  NULL,
+  NULL,
+  NOW() - INTERVAL '5 days',
+  NOW() - INTERVAL '5 days'
+)
+ON CONFLICT (id) DO NOTHING;
+
+-- Comentário final
+SELECT 'Dados de exemplo do Mr. Staffer inseridos com sucesso!' as status;

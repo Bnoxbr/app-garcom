@@ -28,13 +28,13 @@ const ProfessionalsGrid: React.FC<ProfessionalsGridProps> = ({ professionals }) 
           <div 
             key={professional.id} 
             className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transform hover:scale-105 transition-transform duration-200"
-            onClick={() => navigate('/provider/profile')}
+            onClick={() => navigate(`/professional/${professional.id}`)}
             style={{ height: '160px' }}
           >
             {/* Container da imagem com overlay */}
             <div className="relative" style={{ height: '90px' }}>
               <img
-                src={professional.image_url || '/placeholder-avatar.jpg'}
+                src={professional.image || '/placeholder-avatar.jpg'}
                 alt={professional.name}
                 className="w-full h-full object-cover"
               />

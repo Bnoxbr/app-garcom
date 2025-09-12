@@ -1,23 +1,12 @@
 import { useState, useEffect, createContext, useContext } from 'react'
 import type { User, Session, AuthError } from '@supabase/supabase-js'
 import { supabase } from '../lib/supabase'
+import type { UserRole, Profile } from '../types'
 
-export type UserRole = 'client' | 'provider' | 'admin' | 'establishment'
-
-export interface UserProfile {
-  id: string
-  full_name?: string
-  avatar_url?: string
-  phone?: string
-  address?: string
-  bio?: string
-  role: UserRole
-  email: string
-  document?: string
-  document_type?: 'cpf' | 'cnpj'
-  created_at: string
-  updated_at: string
-}
+// Alias para compatibilidade
+export type UserProfile = Profile
+// Re-export UserRole for compatibility
+export type { UserRole } from '../types'
 
 export interface AuthState {
   user: User | null
@@ -28,7 +17,7 @@ export interface AuthState {
 }
 
 export interface AuthContextType extends AuthState {
-  signUp: (email: string, password: string, role: UserRole, fullName?: string, document?: string, documentType?: 'cpf' | 'cnpj') => Promise<{ error: AuthError | null }>
+  signUp: (email: string, password: string, profileData: Partial<Profile>) => Promise<{ error: AuthError | null }>
   signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>
   signOut: () => Promise<{ error: AuthError | null }>
   updateProfile: (updates: Partial<UserProfile>) => Promise<{ error: Error | null }>
@@ -93,7 +82,40 @@ export const useAuth = () => {
         .eq('id', userId)
         .single()
 
-      if (error && error.code !== 'PGRST116') { // PGRST116 = no rows returned
+      if (error && error.code === 'PGRST116') {
+        // Perfil não existe, criar um perfil padrão
+        console.log('Perfil não encontrado, criando perfil padrão...')
+        const defaultProfile = {
+          id: userId,
+          full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário',
+          email: user?.email || '',
+          role: 'contratante' as UserRole,
+          document: '',
+          document_type: 'cpf' as 'cpf' | 'cnpj',
+          verified: false,
+          available: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+
+        const { error: insertError } = await supabase
+          .from('profiles')
+          .insert(defaultProfile)
+
+        if (insertError) {
+          console.error('Erro ao criar perfil padrão:', insertError)
+        }
+
+        // Definir o perfil no estado mesmo se houver erro na inserção
+        setProfile({
+          ...defaultProfile,
+          email: user?.email || '',
+          role: 'contratante'
+        })
+        return
+      }
+
+      if (error && error.code !== 'PGRST116') {
         throw error
       }
 
@@ -101,16 +123,45 @@ export const useAuth = () => {
         setProfile({
           ...data,
           email: user?.email || '',
-          role: data.role || 'client'
+          role: data.role || 'contratante'
         })
+      } else {
+        // Fallback: criar perfil padrão se data for null
+        const defaultProfile = {
+          id: userId,
+          full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário',
+          email: user?.email || '',
+          role: 'contratante' as UserRole,
+          document: '',
+          document_type: 'cpf' as 'cpf' | 'cnpj',
+          verified: false,
+          available: true,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+        setProfile(defaultProfile)
       }
     } catch (err) {
       console.error('Erro ao buscar perfil:', err)
+      // Em caso de erro, criar perfil padrão para evitar loop
+      const defaultProfile = {
+        id: userId,
+        full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário',
+        email: user?.email || '',
+        role: 'contratante' as UserRole,
+        document: '',
+        document_type: 'cpf' as 'cpf' | 'cnpj',
+        verified: false,
+        available: true,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      }
+      setProfile(defaultProfile)
       setError(err instanceof Error ? err.message : 'Erro ao carregar perfil')
     }
   }
 
-  const signUp = async (email: string, password: string, role: UserRole, fullName?: string, document?: string, documentType?: 'cpf' | 'cnpj') => {
+  const signUp = async (email: string, password: string, profileData: Partial<Profile>) => {
     try {
       setLoading(true)
       setError(null)
@@ -120,32 +171,48 @@ export const useAuth = () => {
         password,
         options: {
           data: {
-            full_name: fullName,
-            role: role,
-            document: document,
-            document_type: documentType
+            full_name: profileData.full_name,
+            role: profileData.role
           }
         }
       })
 
       if (error) return { error }
 
-      // Create profile record
+      // Create profile record with all new fields
       if (data.user) {
+        const profileToInsert = {
+          id: data.user.id,
+          full_name: profileData.full_name || '',
+          email: email,
+          role: profileData.role || 'contratante',
+          document: profileData.document || '',
+          document_type: profileData.document_type || 'cpf',
+          phone: profileData.phone,
+          bio: profileData.bio,
+          mei_number: profileData.mei_number,
+          specialties: profileData.specialties,
+          hourly_rate: profileData.hourly_rate,
+          experience_years: profileData.experience_years,
+          portfolio_images: profileData.portfolio_images,
+          address: profileData.address,
+          banking_data: profileData.banking_data,
+          rating: profileData.rating,
+          reviews_count: profileData.reviews_count || 0,
+          verified: false,
+          available: profileData.role === 'prestador' ? true : false,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        }
+
         const { error: profileError } = await supabase
           .from('profiles')
-          .insert({
-            id: data.user.id,
-            full_name: fullName,
-            role: role,
-            document: document,
-            document_type: documentType,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString()
-          })
+          .insert(profileToInsert)
 
         if (profileError) {
           console.error('Erro ao criar perfil:', profileError)
+          // Não retornar erro aqui para não bloquear o cadastro
+          // O perfil pode ser criado posteriormente
         }
       }
 
