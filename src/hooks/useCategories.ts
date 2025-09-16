@@ -16,26 +16,9 @@ export const useCategories = () => {
         .order('name')
 
       if (error) {
-        // Fallback data when Supabase tables don't exist yet
-        console.warn('Supabase tables not found, using fallback data')
-        setCategories([
-          {
-            id: '1',
-            name: 'Garçom',
-            icon: 'fas fa-utensils'
-          },
-          {
-            id: '2',
-            name: 'Bartender',
-            icon: 'fas fa-cocktail'
-          },
-          {
-            id: '3',
-            name: 'Chef',
-            icon: 'fas fa-chef-hat'
-          }
-        ])
-        setError(null)
+        setError(error.message)
+        setCategories([]) // Limpa as categorias em caso de erro
+        setLoading(false)
         return
       }
 

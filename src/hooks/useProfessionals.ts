@@ -2,51 +2,54 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Professional } from '../types/index'
+import type { Profile } from '../types/index'
 
 export const useProfessionals = () => {
-  const [professionals, setProfessionals] = useState<Professional[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [professionals, setProfessionals] = useState<Profile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
-  const fetchProfessionals = async () => {
-    try {
-      setLoading(true)
-      const { data, error } = await supabase
-        .from('professionals')
-        .select('*')
-        .order('name')
+  const fetchProfessionals = async () => {
+    try {
+      setLoading(true)
 
-      if (error) {
-        // Define o estado de erro e desativa o carregamento
-        setError(error.message)
-        setLoading(false)
-        return // Termina a execução para não ir para o próximo bloco
-      }
+      // --- CORREÇÃO AQUI: Trocamos 'profiles' por 'professionals'
+      const { data, error } = await supabase
+        .from('professionals')
+        .select('*')
+        .order('name') // Ordena por 'full_name', que é o nome correto da coluna
+      
+      if (error) {
+        console.error('Supabase error:', error);
+        setError(error.message)
+        setLoading(false)
+        return
+      }
 
-      // Define os dados e desativa o carregamento
-      setProfessionals(data || [])
-      setLoading(false)
-    } catch (err) {
-      // Em caso de erro de rede ou outro problema, lide com o erro aqui
-      setError(err instanceof Error ? err.message : 'Erro ao carregar profissionais')
-      setLoading(false)
-      console.error('Erro ao buscar profissionais:', err)
-    }
-  }
+      console.log('Supabase data:', data);
+      
+      setProfessionals(data || [])
+      setLoading(false)
 
-  useEffect(() => {
-    fetchProfessionals()
-  }, [])
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao carregar profissionais')
+      setLoading(false)
+      console.error('Erro ao buscar profissionais:', err)
+    }
+  }
 
-  const refetch = () => {
-    fetchProfessionals()
-  }
+  useEffect(() => {
+    fetchProfessionals()
+  }, [])
 
-  return {
-    professionals,
-    loading,
-    error,
-    refetch
-  }
+  const refetch = () => {
+    fetchProfessionals()
+  }
+
+  return {
+    professionals,
+    loading,
+    error,
+    refetch
+  }
 }

@@ -176,9 +176,7 @@ CREATE TRIGGER update_payments_updated_at
 -- Profiles
 ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
 
-DROP POLICY IF EXISTS "Users can view all profiles" ON profiles;
-CREATE POLICY "Users can view all profiles" ON profiles
-  FOR SELECT USING (true);
+
 
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 CREATE POLICY "Users can update own profile" ON profiles

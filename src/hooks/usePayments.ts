@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { createPayment } from '../lib/mercadopago';
 
 export type PaymentMethod = 'pix' | 'credit_card' | 'debit_card' | 'bitcoin'
 
@@ -28,19 +29,9 @@ export const usePayments = () => {
     setError(null)
 
     try {
-      // Simular processamento de pagamento
-      // Em produção, aqui seria feita a integração real com Mercado Pago/Bitcoin
-      await new Promise(resolve => setTimeout(resolve, 2000))
-
-      if (paymentData.method === 'pix') {
-        return {
-          success: true,
-          transactionId: `pix_${Date.now()}`,
-          qrCode: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='
-        }
-      }
-
+      // Para Bitcoin, usamos a simulação como antes
       if (paymentData.method === 'bitcoin') {
+        await new Promise(resolve => setTimeout(resolve, 2000))
         return {
           success: true,
           transactionId: `btc_${Date.now()}`,
@@ -48,10 +39,32 @@ export const usePayments = () => {
         }
       }
 
-      // Cartão de crédito/débito
-      return {
-        success: true,
-        transactionId: `card_${Date.now()}`
+      // Para outros métodos, integramos com Mercado Pago
+      const mpPaymentData = {
+        transaction_amount: paymentData.amount,
+        description: paymentData.description,
+        payment_method_id: paymentData.method === 'credit_card' ? 'master' : paymentData.method, // Ex: 'master', 'visa', 'pix'
+        payer: {
+          email: paymentData.customerEmail,
+          first_name: paymentData.customerName.split(' ')[0],
+          last_name: paymentData.customerName.split(' ').slice(1).join(' ')
+        }
+      }
+
+      const result = await createPayment(mpPaymentData)
+
+      if (result.id) {
+        return {
+          success: true,
+          transactionId: result.id.toString(),
+          qrCode: result.point_of_interaction?.transaction_data?.qr_code_base64,
+          paymentUrl: result.point_of_interaction?.transaction_data?.ticket_url
+        }
+      } else {
+        // A resposta de erro do Mercado Pago pode não ter uma propriedade 'error' direta.
+        // Em vez disso, a resposta de erro geralmente tem 'message' e 'status'.
+        const errorMessage = (result as any).message || 'Falha no pagamento com Mercado Pago';
+        throw new Error(errorMessage);
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro no processamento do pagamento'

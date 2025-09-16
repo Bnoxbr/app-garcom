@@ -200,7 +200,7 @@ export const useAuth = () => {
           rating: profileData.rating,
           reviews_count: profileData.reviews_count || 0,
           verified: false,
-          available: profileData.role === 'prestador' ? true : false,
+          available: true,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         }
@@ -211,16 +211,23 @@ export const useAuth = () => {
 
         if (profileError) {
           console.error('Erro ao criar perfil:', profileError)
-          // Não retornar erro aqui para não bloquear o cadastro
-          // O perfil pode ser criado posteriormente
+          // Lançar o erro para ser pego pelo bloco catch
+          throw profileError
         }
       }
 
       return { error: null }
     } catch (err) {
-      const error = err as AuthError
-      setError(error.message)
-      return { error }
+      const error = err as AuthError // Pode ser AuthError ou PostgrestError
+      console.error('Erro no signUp:', error)
+      const errorMessage = error.message || 'Ocorreu um erro desconhecido.'
+      setError(errorMessage)
+      return {
+        error: {
+          name: error.name || 'SignUpError',
+          message: errorMessage
+        } as AuthError
+      }
     } finally {
       setLoading(false)
     }

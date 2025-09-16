@@ -29,7 +29,6 @@ const Home: React.FC = () => {
 
 
   const [filters, setFilters] = useState({
-    distance: '0-5',
     availability: 'now',
     rating: '4.0',
     experience: '1'
@@ -58,42 +57,22 @@ const Home: React.FC = () => {
 
   // Dados agora vêm dos hooks do Supabase
 
-  const filteredProfessionals = professionals.filter(professional => {
+  const filteredProfessionals = (professionals || []).filter(professional => {
     // Filtro por categoria
-    const categoryMatch = selectedCategory === 'Todos' || professional.category.includes(selectedCategory);
+    const categoryMatch = selectedCategory === 'Todos' || (professional.specialties && professional.specialties.includes(selectedCategory));
     
     // Filtro por termo de busca
     const searchMatch = professional.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      professional.category.toLowerCase().includes(searchTerm.toLowerCase());
+      (professional.specialties && professional.specialties.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())));
     
-    // Filtro por distância
+    // Filtro por distância (REMOVIDO - não disponível no Profile)
     let distanceMatch = true;
-    if (professional.distance) {
-      const distance = parseFloat(professional.distance.replace(/[^0-9.]/g, ''));
-      switch (filters.distance) {
-        case '0-5':
-          distanceMatch = distance <= 5;
-          break;
-        case '5-10':
-          distanceMatch = distance > 5 && distance <= 10;
-          break;
-        case '10-15':
-          distanceMatch = distance > 10 && distance <= 15;
-          break;
-        case '15+':
-          distanceMatch = distance > 15;
-          break;
-      }
-    }
     
-    // Filtro por disponibilidade
+    // Filtro por disponibilidade (Temporarily disabled as 'available' property is missing)
     let availabilityMatch = true;
-    if (filters.availability !== 'qualquer') {
-      availabilityMatch = professional.available;
-    }
     
     // Filtro por rating
-    const ratingMatch = professional.rating >= parseFloat(filters.rating);
+    const ratingMatch = (professional.rating || 0) >= parseFloat(filters.rating);
     
     return categoryMatch && searchMatch && distanceMatch && availabilityMatch && ratingMatch;
   });
@@ -213,8 +192,8 @@ const Home: React.FC = () => {
             </button>
 
             {showFilterModal && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4">
-                <div className="bg-white rounded-lg w-full max-w-md">
+              <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center px-4 animate-in fade-in duration-300">
+                <div className="bg-white rounded-lg w-full max-w-md animate-in slide-in-from-bottom duration-300">
                   <div className="p-4 border-b border-gray-200 flex justify-between items-center">
                     <h3 className="text-lg font-semibold">Filtros</h3>
                     <button
@@ -224,18 +203,6 @@ const Home: React.FC = () => {
                     </button>
                   </div>
                   <div className="p-4 space-y-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">Distância</label>
-                      <select
-                        value={filters.distance}
-                        onChange={(e) => setFilters({...filters, distance: e.target.value})}
-                        className="w-full p-2 border border-gray-300 rounded-lg">
-                        <option value="0-5">0-5 km</option>
-                        <option value="5-10">5-10 km</option>
-                        <option value="10-15">10-15 km</option>
-                        <option value="15+">15+ km</option>
-                      </select>
-                    </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">Disponibilidade</label>
                       <div className="grid grid-cols-2 gap-2">
@@ -285,20 +252,19 @@ const Home: React.FC = () => {
                     <button
                       onClick={() => {
                         setFilters({
-                          distance: '0-5',
                           availability: 'now',
                           rating: '4.0',
                           experience: '1'
                         });
                       }}
-                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700">
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:scale-105">
                       Limpar Filtros
                     </button>
                     <button
                       onClick={() => {
                         setShowFilterModal(false);
                       }}
-                      className="flex-1 px-4 py-2 bg-gray-800 text-white rounded-lg">
+                      className="flex-1 px-4 py-2 bg-gray-800 text-white rounded-lg transition-all duration-200 hover:bg-gray-900 hover:scale-105">
                       Aplicar
                     </button>
                   </div>
@@ -321,22 +287,22 @@ const Home: React.FC = () => {
               )}
               <div
                 id="category-todos"
-                className={`flex flex-col items-center justify-center min-w-[80px] p-3 rounded-lg cursor-pointer smooth-hover stagger-animation ${selectedCategory === 'Todos' ? 'bg-gray-800 text-white' : 'bg-white shadow-sm'} ${isPulsing && selectedCategory === 'Todos' ? 'animate-pulse' : ''}`}
+                className={`flex flex-col items-center justify-center min-w-[90px] w-20 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md stagger-animation ${selectedCategory === 'Todos' ? 'bg-gray-800 text-white' : 'bg-white shadow-sm'} ${isPulsing && selectedCategory === 'Todos' ? 'animate-pulse' : ''}`}
                 onClick={() => handleCategoryClick('Todos')}
               >
                 <i className="fas fa-border-all text-xl mb-1"></i>
-                <span className="text-xs whitespace-nowrap overflow-hidden text-overflow-ellipsis">Todos</span>
+                <span className="text-xs text-center max-w-full truncate">Todos</span>
               </div>
               {categories.map((category, index) => (
                 <div
                   key={category.id}
                   id={`category-${category.id}`}
-                  className={`flex flex-col items-center justify-center min-w-[80px] p-3 rounded-lg cursor-pointer smooth-hover stagger-animation ${selectedCategory === category.name ? 'bg-gray-800 text-white' : 'bg-white shadow-sm'} ${isPulsing && selectedCategory === category.name ? 'animate-pulse' : ''}`}
+                  className={`flex flex-col items-center justify-center min-w-[90px] w-20 p-3 rounded-lg cursor-pointer transition-all duration-200 hover:scale-105 hover:shadow-md stagger-animation ${selectedCategory === category.name ? 'bg-gray-800 text-white' : 'bg-white shadow-sm'} ${isPulsing && selectedCategory === category.name ? 'animate-pulse' : ''}`}
                   style={{ animationDelay: `${(index + 1) * 0.1}s` }}
                   onClick={() => handleCategoryClick(category.name)}
                 >
                   <i className={`${category.icon} text-xl mb-1`}></i>
-                  <span className="text-xs whitespace-nowrap overflow-hidden text-overflow-ellipsis">{category.name}</span>
+                  <span className="text-xs text-center max-w-full truncate">{category.name}</span>
                 </div>
               ))}
             </div>
