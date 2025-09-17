@@ -42,6 +42,18 @@ export interface BankingData {
   bank_account_type?: 'corrente' | 'poupanca'
 }
 
+// Dados de cartão de crédito (apenas tokens, sem dados sensíveis)
+export interface CreditCard {
+  id: string
+  last_four: string
+  brand: string
+  holder_name: string
+  expiry_month: number
+  expiry_year: number
+  token: string
+  is_default?: boolean
+}
+
 // Endereço completo
 export interface Address {
   cep: string
@@ -106,6 +118,21 @@ export interface Profile {
 
   // Dados bancários
   banking_data?: BankingData
+
+  // Dados da empresa (quando document_type = cnpj)
+  company_name?: string
+  company_address?: Address
+  company_phone?: string
+  company_email?: string
+  company_website?: string
+  company_representative_name?: string
+  company_representative_position?: string
+  company_representative_document?: string
+
+  // Dados financeiros
+  payment_methods?: any[]
+  saved_credit_cards?: any[]
+  bitcoin_wallet?: string
 
   // Avaliações
   rating?: number

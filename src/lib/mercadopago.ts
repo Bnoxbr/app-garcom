@@ -32,7 +32,7 @@ export const getPaymentStatus = async (paymentId: string) => {
       'charged_back': 'charged_back'
     };
     
-    return statusMap[result.status] || 'pending';
+    return result.status && statusMap[result.status as keyof typeof statusMap] || 'pending';
   } catch (error) {
     console.error('Error getting payment status:', error);
     return 'pending'; // Em caso de erro, assumimos que o pagamento ainda está pendente

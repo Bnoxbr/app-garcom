@@ -1,4 +1,4 @@
-import { Profile } from './index';
+import type { Profile } from './index';
 
 export type AuctionStatus = 'active' | 'completed' | 'cancelled';
 export type BidStatus = 'pending' | 'accepted' | 'rejected';
@@ -24,10 +24,14 @@ export interface Auction {
   
   // Campos relacionados (não armazenados diretamente na tabela)
   client?: Profile;
+  creator?: Profile; // Alias para client
   winner?: Profile;
   category_name?: string;
+  category?: string; // Nome da categoria
   bids_count?: number;
   lowest_bid?: number;
+  current_bid_amount?: number; // Valor do lance atual
+  end_date?: string; // Alias para end_time
 }
 
 export interface AuctionBid {

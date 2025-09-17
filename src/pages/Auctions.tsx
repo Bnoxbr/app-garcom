@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/router";
+import { useNavigate } from "react-router-dom";
 import { useAuthContext } from "../hooks/useAuth";
 import { useAuctions } from "../hooks/useAuctions";
-import { Auction, AuctionBid } from "../types";
+import type { Auction, AuctionBid } from "../types";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { FaArrowLeft, FaSearch, FaFilter, FaHistory, FaHome, FaComments, FaUser } from "react-icons/fa";
-import { MdAuction } from "react-icons/md";
+import { FaArrowLeft, FaSearch, FaHome, FaComments, FaUser } from "react-icons/fa";
+import { MdGavel } from "react-icons/md";
 import { toast } from "react-hot-toast";
 
 const AuctionsPage: React.FC = () => {
-  const router = useRouter();
-  const { user, profile } = useAuthContext();
+  const navigate = useNavigate();
+  const { /* user, profile */ } = useAuthContext();
   const { 
     auctions, 
     activeAuctions, 
@@ -105,7 +105,7 @@ const AuctionsPage: React.FC = () => {
   const handleOpenBidModal = (auction: Auction) => {
     setSelectedAuction(auction);
     // Definir valor inicial do lance (atual + 5)
-    const currentBidValue = auction.current_bid_amount || auction.initial_price;
+    const currentBidValue = auction.current_bid_amount || auction.base_price;
     setBidAmount((currentBidValue + 5).toString());
     setShowBidModal(true);
   };
@@ -115,7 +115,7 @@ const AuctionsPage: React.FC = () => {
     if (!selectedAuction || !bidAmount) return;
     
     const bidValue = Number(bidAmount);
-    const currentBidValue = selectedAuction.current_bid_amount || selectedAuction.initial_price;
+    const currentBidValue = selectedAuction.current_bid_amount || selectedAuction.base_price;
     
     if (bidValue <= currentBidValue) {
       toast.error("O lance deve ser maior que o lance atual");
@@ -128,7 +128,7 @@ const AuctionsPage: React.FC = () => {
 
     // Confirmar lance
     if (window.confirm(`Confirmar lance de ${formatCurrency(bidValue)} + taxa de serviço ${formatCurrency(serviceFee)} = ${formatCurrency(totalAmount)}?`)) {
-      const { data, error } = await placeBid(selectedAuction.id, bidValue);
+      const { error } = await placeBid(selectedAuction.id, bidValue);
       
       if (error) {
         toast.error("Erro ao fazer lance: " + error.message);
@@ -155,7 +155,7 @@ const AuctionsPage: React.FC = () => {
           <div className="flex items-center justify-between">
             <div className="flex items-center">
               <button
-                onClick={() => router.push("/")}
+                onClick={() => navigate("/")}
                 className="mr-3 text-gray-600"
               >
                 <FaArrowLeft size={20} />
@@ -248,11 +248,11 @@ const AuctionsPage: React.FC = () => {
           </div>
         ) : error ? (
           <div className="bg-red-100 text-red-700 p-4 rounded-lg">
-            <p>Erro ao carregar leilões: {error.message}</p>
+            <p>Erro ao carregar leilões: {error?.toString() || 'Erro desconhecido'}</p>
           </div>
         ) : getFilteredAuctions().length === 0 ? (
           <div className="bg-gray-50 rounded-lg p-8 text-center">
-            <MdAuction className="mx-auto text-gray-400 mb-4" size={48} />
+            <MdGavel className="mx-auto text-gray-400 mb-4" size={48} />
             <h3 className="text-lg font-medium text-gray-900 mb-2">Nenhum leilão encontrado</h3>
             <p className="text-gray-600">
               {searchTerm
@@ -265,7 +265,7 @@ const AuctionsPage: React.FC = () => {
         ) : (
           <div className="space-y-4">
             {getFilteredAuctions().map((auction) => {
-              const currentBidValue = auction.current_bid_amount || auction.initial_price;
+              const currentBidValue = auction.current_bid_amount || auction.base_price;
               
               return (
                 <div key={auction.id} className="bg-white rounded-lg shadow-md overflow-hidden mb-4">
@@ -280,13 +280,13 @@ const AuctionsPage: React.FC = () => {
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-gray-500">Criado {formatTimeRemaining(auction.created_at)}</p>
-                        <p className="text-xs text-gray-500">Termina {formatTimeRemaining(auction.end_date)}</p>
+                        <p className="text-xs text-gray-500">Termina {formatTimeRemaining(auction.end_date || auction.end_time)}</p>
                       </div>
                     </div>
 
                     <div className="flex justify-between items-center mb-3">
                       <div>
-                        <p className="text-sm">Preço inicial: <span className="font-semibold">{formatCurrency(auction.initial_price)}</span></p>
+                        <p className="text-sm">Preço inicial: <span className="font-semibold">{formatCurrency(auction.base_price)}</span></p>
                         <p className="text-sm">Lance atual: <span className="font-semibold text-green-600">{formatCurrency(currentBidValue)}</span></p>
                       </div>
                       <div className="text-right">
@@ -333,7 +333,7 @@ const AuctionsPage: React.FC = () => {
               <h3 className="text-xl font-semibold mb-4">Fazer lance para: {selectedAuction.title}</h3>
               
               <div className="mb-4">
-                <p className="text-sm text-gray-600 mb-2">Lance atual: {formatCurrency(selectedAuction.current_bid_amount || selectedAuction.initial_price)}</p>
+                <p className="text-sm text-gray-600 mb-2">Lance atual: {formatCurrency(selectedAuction.current_bid_amount || selectedAuction.base_price)}</p>
                 
                 <label className="block text-sm font-medium text-gray-700 mb-1">Seu lance (R$)</label>
                 <input
@@ -341,7 +341,7 @@ const AuctionsPage: React.FC = () => {
                   value={bidAmount}
                   onChange={(e) => setBidAmount(e.target.value)}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  min={(selectedAuction.current_bid_amount || selectedAuction.initial_price) + 1}
+                  min={(selectedAuction.current_bid_amount || selectedAuction.base_price) + 1}
                   step="1"
                 />
                 
@@ -361,18 +361,18 @@ const AuctionsPage: React.FC = () => {
                       <div key={bid.id} className="flex justify-between items-center py-2 border-b border-gray-100">
                         <div className="flex items-center">
                           <div className="w-6 h-6 bg-gray-200 rounded-full overflow-hidden mr-2">
-                            {bid.bidder?.avatar_url ? (
-                              <img src={bid.bidder.avatar_url} alt={bid.bidder.name} className="w-full h-full object-cover" />
+                            {bid.professional?.avatar_url ? (
+                              <img src={bid.professional.avatar_url} alt={bid.professional.name} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-500">
-                                {bid.bidder?.name?.charAt(0) || "U"}
+                                {bid.professional?.name?.charAt(0) || "U"}
                               </div>
                             )}
                           </div>
-                          <span className="text-xs">{bid.bidder?.name || "Usuário"}</span>
+                          <span className="text-xs">{bid.professional?.name || "Usuário"}</span>
                         </div>
                         <div className="text-right">
-                          <p className="text-xs font-medium">{formatCurrency(bid.amount)}</p>
+                          <p className="text-xs font-medium">{formatCurrency(bid.bid_amount)}</p>
                           <p className="text-xs text-gray-500">{formatTimeRemaining(bid.created_at)}</p>
                         </div>
                       </div>
@@ -405,28 +405,28 @@ const AuctionsPage: React.FC = () => {
         <div className="container mx-auto px-4">
           <div className="flex justify-around">
             <button
-              onClick={() => router.push("/")}
+              onClick={() => navigate("/")}
               className="flex flex-col items-center py-3 px-5 text-gray-600"
             >
               <FaHome size={20} />
               <span className="text-xs mt-1">Início</span>
             </button>
             <button
-              onClick={() => router.push("/auctions")}
+              onClick={() => navigate("/auctions")}
               className="flex flex-col items-center py-3 px-5 text-blue-600"
             >
-              <MdAuction size={20} />
+              <MdGavel size={20} />
               <span className="text-xs mt-1">Leilões</span>
             </button>
             <button
-              onClick={() => router.push("/messages")}
+              onClick={() => navigate("/messages")}
               className="flex flex-col items-center py-3 px-5 text-gray-600"
             >
               <FaComments size={20} />
               <span className="text-xs mt-1">Mensagens</span>
             </button>
             <button
-              onClick={() => router.push("/profile")}
+              onClick={() => navigate("/profile")}
               className="flex flex-col items-center py-3 px-5 text-gray-600"
             >
               <FaUser size={20} />

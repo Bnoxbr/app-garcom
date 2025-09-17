@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
-import { Auction, AuctionBid, Profile } from '../types';
+import type { Auction, AuctionBid } from '../types';
 import { useAuthContext } from './useAuth';
 
 interface UseAuctionsReturn {
@@ -135,7 +135,7 @@ export const useAuctions = (): UseAuctionsReturn => {
       }
 
       // Verificar se o profissional tem avaliação mínima (3.5)
-      if (profile.role === 'professional') {
+      if (profile.role === 'prestador') {
         const { data: professionalData } = await supabase
           .from('professionals')
           .select('rating')
@@ -257,7 +257,7 @@ export const useAuctions = (): UseAuctionsReturn => {
   const activeAuctions = auctions.filter(auction => auction.status === 'active');
 
   // Filtrar meus leilões (criados pelo usuário atual)
-  const myAuctions = auctions.filter(auction => auction.creator_id === profile?.id);
+  const myAuctions = auctions.filter(auction => auction.client_id === profile?.id);
 
   return {
     auctions,

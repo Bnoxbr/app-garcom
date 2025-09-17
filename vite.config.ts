@@ -32,14 +32,28 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      includeAssets: [
+        'favicon.ico', 
+        'apple-touch-icon.png', 
+        'masked-icon.svg',
+        'pwa-192x192.png',
+        'pwa-512x512.png',
+        'manifest.webmanifest'
+      ],
+      // Usando generateSW em vez de injectManifest para gerar automaticamente o service worker
+      strategies: 'generateSW',
+      injectRegister: 'auto',
+      devOptions: {
+        enabled: false,
+        type: 'module',
+        navigateFallback: 'index.html',
+      },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg,webmanifest}'],
         skipWaiting: true,
         clientsClaim: true,
-        navigateFallback: null,
-        modifyURLPrefix: {
-          'assets/': './assets/'
-        },
+        navigateFallback: 'index.html',
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
@@ -62,10 +76,31 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
               }
             }
+          },
+          {
+            urlPattern: /\.(?:webmanifest)$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'manifest-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              }
+            }
+          },
+          {
+            urlPattern: /\.(?:js|css)$/i,
+            handler: 'StaleWhileRevalidate',
+            options: {
+              cacheName: 'static-resources',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 7 // 7 days
+              }
+            }
           }
         ]
       },
-      includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
         name: 'App Garçom - Plataforma de Serviços',
         short_name: 'App Garçom',

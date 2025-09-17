@@ -14,6 +14,7 @@ export interface PaymentData {
   booking_id?: string
   provider_id?: string
   client_id?: string
+  is_advance_payment?: boolean
 }
 
 export interface PaymentCommission {
@@ -27,6 +28,7 @@ export interface PaymentResult {
   paymentUrl?: string
   qrCode?: string
   error?: string
+  payment_id?: string
 }
 
 export const usePayments = () => {
@@ -35,8 +37,8 @@ export const usePayments = () => {
   
   // Configuração padrão de comissões
   const defaultCommission: PaymentCommission = {
-    platform_fee_percentage: 10, // 10% para a plataforma
-    provider_percentage: 90, // 90% para o prestador
+    platform_fee_percentage: 15, // 15% para a plataforma
+    provider_percentage: 85, // 85% para o prestador
   }
   
   // Função para calcular valores com comissão
@@ -64,10 +66,9 @@ export const usePayments = () => {
         if (paymentData.booking_id && paymentData.provider_id && paymentData.client_id) {
           const { platformFee, providerAmount } = calculateCommission(paymentData.amount)
           
-          await supabase
+          const { /* data: paymentRecord, */ error: paymentError } = await supabase
             .from('payments')
-            .insert([
-              {
+            .insert([{
                 booking_id: paymentData.booking_id,
                 amount: paymentData.amount,
                 provider_id: paymentData.provider_id,
@@ -77,8 +78,13 @@ export const usePayments = () => {
                 status: 'pending',
                 platform_fee: platformFee,
                 provider_amount: providerAmount,
+                is_advance_payment: paymentData.is_advance_payment || false,
+                funds_status: paymentData.is_advance_payment ? 'held' : 'released',
               },
             ])
+            .select()
+            
+          if (paymentError) throw paymentError
         }
         
         return {
@@ -107,10 +113,9 @@ export const usePayments = () => {
         if (paymentData.booking_id && paymentData.provider_id && paymentData.client_id) {
           const { platformFee, providerAmount } = calculateCommission(paymentData.amount)
           
-          await supabase
+          const { /* data: paymentRecord, */ error: paymentError } = await supabase
             .from('payments')
-            .insert([
-              {
+            .insert([{
                 booking_id: paymentData.booking_id,
                 amount: paymentData.amount,
                 provider_id: paymentData.provider_id,
@@ -120,8 +125,13 @@ export const usePayments = () => {
                 status: 'pending',
                 platform_fee: platformFee,
                 provider_amount: providerAmount,
+                is_advance_payment: paymentData.is_advance_payment || false,
+                funds_status: paymentData.is_advance_payment ? 'held' : 'released',
               },
             ])
+            .select()
+            
+          if (paymentError) throw paymentError
             
           // Atualizar status da reserva
           await supabase
@@ -226,12 +236,111 @@ export const usePayments = () => {
     }
   }
 
+  // Função para registrar check-in do prestador
+  const registerProviderCheckIn = async (bookingId: string) => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      // Atualizar status da reserva
+      const { error: bookingError } = await supabase
+        .from('bookings')
+        .update({ provider_checked_in: true, provider_checkin_time: new Date().toISOString() })
+        .eq('id', bookingId)
+        
+      if (bookingError) throw bookingError
+      
+      return { success: true }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao registrar check-in'
+      setError(errorMessage)
+      return { success: false, error: errorMessage }
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  // Função para registrar check-in do cliente
+  const registerClientCheckIn = async (bookingId: string) => {
+    setLoading(true)
+    setError(null)
+    
+    try {
+      // Atualizar status da reserva
+      const { error: bookingError } = await supabase
+        .from('bookings')
+        .update({ client_checked_in: true, client_checkin_time: new Date().toISOString() })
+        .eq('id', bookingId)
+        
+      if (bookingError) throw bookingError
+      
+      // Verificar se ambos já fizeram check-in para liberar o pagamento
+      const { data: booking } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('id', bookingId)
+        .single()
+      
+      if (booking && booking.provider_checked_in && booking.client_checked_in) {
+        // Liberar fundos retidos
+        const { data: payment } = await supabase
+          .from('payments')
+          .select('*')
+          .eq('booking_id', bookingId)
+          .eq('is_advance_payment', true)
+          .eq('funds_status', 'held')
+          .single()
+          
+        if (payment) {
+          await supabase
+            .from('payments')
+            .update({ funds_status: 'released', service_confirmed_at: new Date().toISOString() })
+            .eq('id', payment.id)
+        }
+      }
+      
+      return { success: true }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao registrar check-in'
+      setError(errorMessage)
+      return { success: false, error: errorMessage }
+    } finally {
+      setLoading(false)
+    }
+  }
+  
+  // Função para verificar se o serviço foi confirmado (ambos fizeram check-in)
+  const checkServiceConfirmation = async (bookingId: string) => {
+    try {
+      const { data: booking } = await supabase
+        .from('bookings')
+        .select('*')
+        .eq('id', bookingId)
+        .single()
+        
+      return {
+        confirmed: !!(booking && booking.provider_checked_in && booking.client_checked_in),
+        provider_checked_in: booking?.provider_checked_in || false,
+        client_checked_in: booking?.client_checked_in || false,
+        provider_checkin_time: booking?.provider_checkin_time,
+        client_checkin_time: booking?.client_checkin_time
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Erro ao verificar confirmação de serviço'
+      setError(errorMessage)
+      throw err
+    }
+  }
+
   return {
     loading,
     error,
     processPayment,
     checkPaymentStatus,
     calculateCommission,
-    validatePaymentData
+    validatePaymentData,
+    registerProviderCheckIn,
+    registerClientCheckIn,
+    checkServiceConfirmation
   }
 }

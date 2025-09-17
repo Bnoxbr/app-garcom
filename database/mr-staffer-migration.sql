@@ -89,6 +89,13 @@ CREATE TABLE bookings (
   
   -- Status do booking
   status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'confirmed', 'in_progress', 'completed', 'cancelled')),
+  payment_status VARCHAR(20) DEFAULT 'unpaid' CHECK (payment_status IN ('unpaid', 'pending', 'paid')),
+  
+  -- Check-in do prestador e cliente
+  provider_checked_in BOOLEAN DEFAULT FALSE,
+  client_checked_in BOOLEAN DEFAULT FALSE,
+  provider_checkin_time TIMESTAMP WITH TIME ZONE,
+  client_checkin_time TIMESTAMP WITH TIME ZONE,
   
   -- Avaliação (após conclusão)
   client_rating INTEGER CHECK (client_rating >= 1 AND client_rating <= 5),
@@ -127,6 +134,11 @@ CREATE TABLE payments (
   
   -- Status
   status VARCHAR(20) NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'processing', 'completed', 'failed', 'refunded')),
+  
+  -- Pagamento antecipado e retenção de fundos
+  is_advance_payment BOOLEAN DEFAULT FALSE,
+  funds_status VARCHAR(20) DEFAULT 'released' CHECK (funds_status IN ('held', 'released')),
+  service_confirmed_at TIMESTAMP WITH TIME ZONE,
   
   -- IDs externos (gateway de pagamento)
   external_payment_id VARCHAR(255),
