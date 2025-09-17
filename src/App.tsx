@@ -6,6 +6,8 @@ import { ProtectedRoute, PWAUpdatePrompt, OfflineNotification } from './componen
 import { TooltipProvider } from './components/ui/tooltip';
 import UserProfile from './pages/provider/UserProfile';
 import ClientProfile from './pages/client/ClientProfile';
+import ProviderDashboard from './pages/provider/Dashboard';
+import ClientDashboard from './pages/client/Dashboard';
 import Chat from './pages/shared/Chat';
 import AdvancedSearch from './pages/shared/AdvancedSearch';
 import AuctionServices from './pages/shared/AuctionServices';
@@ -63,7 +65,7 @@ const App: React.FC = () => {
                 path="/provider/dashboard" 
                 element={
                   <ProtectedRoute requiredRoles={['prestador']}>
-                    <div>Provider Dashboard</div>
+                    <ProviderDashboard />
                   </ProtectedRoute>
                 } 
               />
@@ -81,7 +83,7 @@ const App: React.FC = () => {
                 path="/client/dashboard" 
                 element={
                   <ProtectedRoute requiredRoles={['contratante']}>
-                    <div>Client Dashboard</div>
+                    <ClientDashboard />
                   </ProtectedRoute>
                 } 
               />
@@ -117,19 +119,11 @@ const App: React.FC = () => {
               />
               <Route 
                 path="/auctions" 
-                element={
-                  <ProtectedRoute>
-                    <AuctionServices />
-                  </ProtectedRoute>
-                } 
+                element={<AuctionServices />} 
               />
               <Route 
                 path="/leilao" 
-                element={
-                  <ProtectedRoute>
-                    <AuctionServices />
-                  </ProtectedRoute>
-                } 
+                element={<AuctionServices />} 
               />
               
               {/* Rotas de desenvolvimento/placeholder protegidas */}

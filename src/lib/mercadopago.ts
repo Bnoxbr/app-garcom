@@ -13,3 +13,28 @@ export const createPayment = async (paymentData: any) => {
     throw error;
   }
 };
+
+export const getPaymentStatus = async (paymentId: string) => {
+  const payment = new Payment(client);
+
+  try {
+    const result = await payment.get({ id: paymentId });
+    
+    // Mapear status do Mercado Pago para nosso sistema
+    const statusMap: Record<string, string> = {
+      'approved': 'completed',
+      'authorized': 'pending',
+      'in_process': 'pending',
+      'in_mediation': 'pending',
+      'rejected': 'failed',
+      'cancelled': 'cancelled',
+      'refunded': 'refunded',
+      'charged_back': 'charged_back'
+    };
+    
+    return statusMap[result.status] || 'pending';
+  } catch (error) {
+    console.error('Error getting payment status:', error);
+    return 'pending'; // Em caso de erro, assumimos que o pagamento ainda está pendente
+  }
+};

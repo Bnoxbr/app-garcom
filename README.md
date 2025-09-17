@@ -1,14 +1,15 @@
 # App Garçom 🍽️
 
-Aplicativo para contratação de profissionais de gastronomia (garçons, bartenders, chefs, etc.) para eventos.
+Plataforma para contratação de profissionais de gastronomia (garçons, bartenders, chefs, etc.) para eventos.
 
 ## 🚀 Tecnologias
 
 - **React 18** com TypeScript
 - **Vite** para build e desenvolvimento
 - **Tailwind CSS** para estilização
-- **Supabase** para backend e banco de dados
-- **Lucide React** para ícones
+- **Supabase** para backend, autenticação e banco de dados
+- **PWA** para instalação em dispositivos móveis
+- **React Router** para navegação
 
 ## 📋 Pré-requisitos
 
@@ -53,22 +54,25 @@ npm install
 npm run dev
 ```
 
-O aplicativo estará disponível em `http://localhost:5173`
+O aplicativo estará disponível em `http://localhost:5174`
 
 ## 📁 Estrutura do Projeto
 
 ```
 src/
-├── components/          # Componentes React
-├── hooks/              # Custom hooks
-├── lib/                # Configurações (Supabase)
-├── types/              # Definições TypeScript
-├── App.tsx             # Componente principal
-└── main.tsx            # Ponto de entrada
+├── components/        # Componentes React reutilizáveis
+├── hooks/             # Custom hooks (auth, data, PWA)
+├── lib/               # Configurações (Supabase)
+├── pages/             # Páginas da aplicação
+│   ├── auth/          # Páginas de autenticação
+│   └── ...            # Outras páginas
+├── types/             # Definições TypeScript
+├── App.tsx            # Componente principal e rotas
+└── main.tsx           # Ponto de entrada
 
 database/
-├── migrations.sql      # Schema do banco
-└── seed-data.sql       # Dados de exemplo
+├── migrations.sql     # Schema do banco
+└── seed-data.sql      # Dados de exemplo
 ```
 
 ## 🔧 Scripts Disponíveis
@@ -76,19 +80,37 @@ database/
 - `npm run dev` - Inicia o servidor de desenvolvimento
 - `npm run build` - Gera build de produção
 - `npm run preview` - Visualiza build de produção
-- `npm run lint` - Executa linting do código
 
 ## 📱 Funcionalidades
 
+- [x] Sistema de autenticação completo
 - [x] Listagem de profissionais
 - [x] Filtros por categoria
 - [x] Busca por nome
-- [x] Filtros de distância e disponibilidade
-- [ ] Sistema de autenticação
-- [ ] Agendamento de serviços
-- [ ] Avaliações e comentários
+- [x] Filtros de disponibilidade
+- [x] PWA com suporte offline
 - [ ] Chat em tempo real
+- [ ] Agendamento de serviços
+- [ ] Leilão de serviços
 - [ ] Pagamentos integrados
+
+## 🌐 PWA
+
+O aplicativo está configurado como Progressive Web App (PWA), permitindo:
+
+- Instalação em dispositivos móveis e desktop
+- Funcionamento offline
+- Atualizações automáticas
+- Experiência semelhante a aplicativos nativos
+
+## 🔐 Autenticação
+
+O sistema de autenticação inclui:
+
+- Registro de usuários (prestadores e contratantes)
+- Login com email/senha
+- Recuperação de senha
+- Rotas protegidas por perfil
 
 ## 🤝 Contribuição
 
@@ -98,6 +120,6 @@ database/
 4. Push para a branch (`git push origin feature/AmazingFeature`)
 5. Abra um Pull Request
 
-## 📄 Licença
+## 📄 Status do Projeto
 
-Este projeto está sob a licença MIT. Veja o arquivo [LICENSE](LICENSE) para detalhes.
+Para informações detalhadas sobre o status atual do projeto, consulte o arquivo [PROJETO_STATUS_ATUAL.md](./PROJETO_STATUS_ATUAL.md).

@@ -2,6 +2,9 @@
 
 export type UserRole = 'contratante' | 'prestador' | 'admin'
 
+// Exportar tipos de leilão
+export * from './auction'
+
 export interface Regiao {
   id: string
   nome: string

@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PlaceholderImage from '../../components/ui/PlaceholderImage';
 import NavigationPlaceholder from '../../components/ui/NavigationPlaceholder';
+import { useAuthContext } from '../../hooks/useAuth';
 
 // Interfaces
 interface Professional {
@@ -38,6 +40,8 @@ interface Category {
 }
 
 const AuctionServices: React.FC = () => {
+  const { user } = useAuthContext();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('ativos');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [searchTerm, setSearchTerm] = useState('');
@@ -197,6 +201,17 @@ const AuctionServices: React.FC = () => {
 
   // Abrir modal de lance
   const handleOpenBidModal = (auction: Auction) => {
+    // Verificar se o usuário está autenticado
+    if (!user) {
+      setToastMessage('Faça login para dar um lance');
+      setShowToast(true);
+      setTimeout(() => {
+        setShowToast(false);
+        navigate('/auth/login', { state: { from: '/auctions' } });
+      }, 2000);
+      return;
+    }
+    
     setSelectedAuction(auction);
     setBidAmount((auction.currentBid + 5).toString());
     setShowBidModal(true);
@@ -204,6 +219,17 @@ const AuctionServices: React.FC = () => {
 
   // Enviar lance
   const handleSubmitBid = () => {
+    // Verificar se o usuário está autenticado
+    if (!user) {
+      setToastMessage('Faça login para dar um lance');
+      setShowToast(true);
+      setTimeout(() => {
+        setShowToast(false);
+        navigate('/auth/login', { state: { from: '/auctions' } });
+      }, 2000);
+      return;
+    }
+    
     if (!selectedAuction || !bidAmount) return;
 
     const bidValue = Number(bidAmount);
