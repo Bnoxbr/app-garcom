@@ -56,7 +56,7 @@ const App: React.FC = () => {
               {/* Rotas de perfil unificadas */}
               <Route path="/provider/profile/:id" element={<ProtectedRoute requiredRoles={['prestador']}><UserProfile userType='prestador' /></ProtectedRoute>} />
               <Route path="/client/profile/:id" element={<ProtectedRoute requiredRoles={['contratante']}><ClientProfile /></ProtectedRoute>} />
-              <Route path="/professional/profile/:id" element={<ProtectedRoute requiredRoles={['prestador']}><UserProfile userType='prestador' /></ProtectedRoute>} />
+              <Route path="/professional/profile/:id" element={<UserProfile userType='prestador' />} />
               
               {/* Rotas protegidas - Provider */}
               <Route 

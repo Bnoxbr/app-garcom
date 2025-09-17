@@ -87,6 +87,7 @@ export const useAuth = () => {
         console.log('Perfil não encontrado, criando perfil padrão...')
         const defaultProfile = {
           id: userId,
+          name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário',
           full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário',
           email: user?.email || '',
           role: 'contratante' as UserRole,
@@ -129,6 +130,7 @@ export const useAuth = () => {
         // Fallback: criar perfil padrão se data for null
         const defaultProfile = {
           id: userId,
+          name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário',
           full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário',
           email: user?.email || '',
           role: 'contratante' as UserRole,
@@ -146,6 +148,7 @@ export const useAuth = () => {
       // Em caso de erro, criar perfil padrão para evitar loop
       const defaultProfile = {
         id: userId,
+        name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário',
         full_name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Usuário',
         email: user?.email || '',
         role: 'contratante' as UserRole,

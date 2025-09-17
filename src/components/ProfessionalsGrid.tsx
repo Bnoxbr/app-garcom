@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Profile } from '../types';
+import type { Professional } from '../types';
 
 interface ProfessionalsGridProps {
-  professionals: Profile[];
+  professionals: Professional[];
 }
 
 const ProfessionalsGrid: React.FC<ProfessionalsGridProps> = ({ professionals }) => {
@@ -28,7 +28,7 @@ const ProfessionalsGrid: React.FC<ProfessionalsGridProps> = ({ professionals }) 
           <div 
             key={professional.id} 
             className="bg-white rounded-lg shadow-md overflow-hidden cursor-pointer transform hover:scale-105 hover:translate-y-[-2px] hover:shadow-xl transition-all duration-300 opacity-0 animate-fade-in"
-            onClick={() => navigate(`/user/${professional.id}`)}
+            onClick={() => navigate(`/professional/profile/${professional.id}`)}
             style={{ 
               height: '160px',
               animationDelay: `${index * 0.1}s`,
@@ -38,9 +38,12 @@ const ProfessionalsGrid: React.FC<ProfessionalsGridProps> = ({ professionals }) 
             {/* Container da imagem com overlay */}
             <div className="relative" style={{ height: '90px' }}>
               <img
-                src={professional.avatar_url || '/placeholder-avatar.jpg'}
-                alt={professional.full_name}
+                src={professional.avatar_url || "/images/default-avatar.svg"}
+                alt={`Foto de ${professional.name}`}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  e.currentTarget.src = "/images/default-avatar.svg";
+                }}
               />
             </div>
             
@@ -51,7 +54,7 @@ const ProfessionalsGrid: React.FC<ProfessionalsGridProps> = ({ professionals }) 
                 {/* Nome e categoria - canto superior esquerdo */}
                 <div className="flex-1">
                   <h4 className="font-bold text-gray-900 text-sm truncate leading-tight">
-                    {professional.full_name}
+                    {professional.name}
                   </h4>
                   <p className="text-xs text-gray-600 truncate">
                     {professional.specialties?.[0] || 'Profissional'}

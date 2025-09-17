@@ -63,7 +63,7 @@ const Home: React.FC = () => {
     
     // Filtro por termo de busca
     const searchMatch = professional.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (professional.specialties && professional.specialties.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())));
+    (professional.specialties && Array.isArray(professional.specialties) && professional.specialties.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())));
     
     // Filtro por distância (REMOVIDO - não disponível no Profile)
     let distanceMatch = true;
@@ -175,20 +175,19 @@ const Home: React.FC = () => {
             <input
               type="text"
               placeholder="Buscar garçons, cozinheiros, recepcionistas..."
-              className="w-full py-3 px-4 pr-10 rounded-lg bg-white shadow-sm border-none text-sm smooth-transition focus:shadow-lg focus:scale-[1.02]"
+              className="w-full py-3 px-4 pr-20 rounded-lg bg-white shadow-sm border-none text-sm smooth-transition focus:shadow-lg focus:scale-[1.02]"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
-            <button 
-              onClick={() => navigate('/search')}
-              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer">
-              <i className="fas fa-search"></i>
-            </button>
             <button
-              id="filterButton"
               onClick={() => setShowFilterModal(true)}
-              className="absolute right-10 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer">
+              className="absolute right-14 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer">
               <i className="fas fa-filter"></i>
+            </button>
+            <button 
+              onClick={() => setSearchTerm(searchTerm)}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white px-3 py-1 rounded-lg text-sm hover:bg-gray-900 transition-colors">
+              Buscar
             </button>
 
             {showFilterModal && (

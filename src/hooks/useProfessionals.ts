@@ -2,10 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { supabase } from '../lib/supabase'
-import type { Profile } from '../types/index'
+import type { Professional } from '../types/index'
 
 export const useProfessionals = () => {
-  const [professionals, setProfessionals] = useState<Profile[]>([])
+  const [professionals, setProfessionals] = useState<Professional[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -13,11 +13,11 @@ export const useProfessionals = () => {
     try {
       setLoading(true)
 
-      // --- CORREÇÃO AQUI: Trocamos 'profiles' por 'professionals'
+      // Busca todos os profissionais da tabela 'professionals'
       const { data, error } = await supabase
         .from('professionals')
         .select('*')
-        .order('name') // Ordena por 'full_name', que é o nome correto da coluna
+        .order('name') // Ordena por 'name', que é o nome da coluna na tabela
       
       if (error) {
         console.error('Supabase error:', error);

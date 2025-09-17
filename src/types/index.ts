@@ -55,22 +55,31 @@ export interface Address {
 export interface Professional {
   id: string
   name: string
-  category: string
+  email?: string
+  avatar_url?: string
+  category: {
+    id: string
+    name: string
+  }
   specialties?: string[]
-  rating: number
-  reviews: number
+  rating?: number
+  reviews?: number
   distance?: string
-  available: boolean
-  image?: string
+  available?: boolean
   price?: string
+  bio?: string
   description?: string
   created_at?: string
   updated_at?: string
+  phone?: string
+  document?: string
+  address?: Address
 }
 
 // Profile expandido para Mr. Staffer
 export interface Profile {
   id: string
+  name: string
   full_name: string
   email: string
   role: UserRole
@@ -98,13 +107,42 @@ export interface Profile {
   // Avaliações
   rating?: number
   reviews_count?: number
+}
 
-  // Status
-  verified: boolean
-  available: boolean
-
+// Tipo para eventos
+export interface Event {
+  id: string
+  title: string
+  description: string
+  date: string
+  time: string
+  location: string
+  client_id: string
+  status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
+  professionals: Professional[]
   created_at: string
   updated_at: string
+}
+
+// Tipo para mensagens
+export interface Message {
+  id: string
+  sender_id: string
+  receiver_id: string
+  content: string
+  read: boolean
+  created_at: string
+}
+
+// Tipo para avaliações
+export interface Review {
+  id: string
+  reviewer_id: string
+  professional_id: string
+  event_id: string
+  rating: number
+  comment: string
+  created_at: string
 }
 
 export interface User {
