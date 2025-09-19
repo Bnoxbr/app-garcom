@@ -37,7 +37,7 @@ export const useAuctions = (): UseAuctionsReturn => {
 
       const { data, error: fetchError } = await supabase
         .from('auctions')
-        .select('*, creator:profiles(*)')
+        .select('*, creator:contratantes(*)')
         .order('created_at', { ascending: false });
 
       if (fetchError) {
@@ -58,7 +58,7 @@ export const useAuctions = (): UseAuctionsReturn => {
     try {
       const { data, error } = await supabase
         .from('auctions')
-        .select('*, creator:profiles(*)')
+        .select('*, creator:contratantes(*)')
         .eq('id', auctionId)
         .single();
 
@@ -135,7 +135,7 @@ export const useAuctions = (): UseAuctionsReturn => {
       }
 
       // Verificar se o profissional tem avaliação mínima (3.5)
-      if (profile.role === 'prestador') {
+      if (profile.role === 'profissional') {
         const { data: professionalData } = await supabase
           .from('professionals')
           .select('rating')
@@ -179,7 +179,7 @@ export const useAuctions = (): UseAuctionsReturn => {
     try {
       const { data, error } = await supabase
         .from('auction_bids')
-        .select('*, bidder:profiles(*)')
+        .select('*, bidder:profissionais(*)')
         .eq('auction_id', auctionId)
         .order('amount', { ascending: true });
 
@@ -205,7 +205,7 @@ export const useAuctions = (): UseAuctionsReturn => {
       }
 
       // Verificar se o usuário é o criador do leilão
-      if (bidData.auction.creator_id !== profile?.id) {
+      if (profile?.role !== 'contratante' || (bidData.auction && bidData.auction.creator_id !== profile?.id)) {
         throw new Error('Apenas o criador do leilão pode aceitar lances');
       }
 
@@ -233,6 +233,29 @@ export const useAuctions = (): UseAuctionsReturn => {
         throw updateAuctionError;
       }
 
+      // 3. Criar um novo booking a partir dos dados do leilão e do lance
+      const { error: createBookingError } = await supabase.from('bookings').insert([
+        {
+          client_id: bidData.auction.creator_id,
+          provider_id: bidData.bidder_id,
+          service_type: bidData.auction.category_id || 'geral', // Usar category_id ou um valor padrão
+          event_date: bidData.auction.event_date,
+          duration_hours: bidData.auction.duration_hours,
+          hourly_rate: bidData.amount / (bidData.auction.duration_hours || 1), // Calcular valor por hora
+          total_amount: bidData.amount,
+          event_address: JSON.parse(bidData.auction.location || '{}'), // Converter string JSON para objeto
+          description: bidData.auction.description,
+          status: 'confirmed',
+          payment_status: 'unpaid',
+        },
+      ]);
+
+      if (createBookingError) {
+        // Idealmente, usar uma transação para reverter as alterações anteriores
+        console.error('Erro ao criar booking, idealmente reverteria a transação:', createBookingError);
+        throw createBookingError;
+      }
+
       // Atualizar a lista de leilões
       await fetchAuctions();
 
@@ -254,10 +277,12 @@ export const useAuctions = (): UseAuctionsReturn => {
   }, []);
 
   // Filtrar leilões ativos
-  const activeAuctions = auctions.filter(auction => auction.status === 'active');
+  const activeAuctions = auctions.filter(auction => auction.status === 'open');
 
-  // Filtrar meus leilões (criados pelo usuário atual)
-  const myAuctions = auctions.filter(auction => auction.client_id === profile?.id);
+  // Filtrar meus leilões (criados pelo usuário atual, se for contratante)
+  const myAuctions = profile?.role === 'contratante' 
+    ? auctions.filter(auction => auction.creator_id === profile?.id)
+    : [];
 
   return {
     auctions,

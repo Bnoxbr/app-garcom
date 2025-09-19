@@ -62,8 +62,8 @@ const Home: React.FC = () => {
     const categoryMatch = selectedCategory === 'Todos' || (professional.specialties && professional.specialties.includes(selectedCategory));
     
     // Filtro por termo de busca
-    const searchMatch = professional.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (professional.specialties && Array.isArray(professional.specialties) && professional.specialties.some(s => s.toLowerCase().includes(searchTerm.toLowerCase())));
+    const searchMatch = (professional.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (professional.specialties && Array.isArray(professional.specialties) && professional.specialties.some((s: string) => (s || '').toLowerCase().includes(searchTerm.toLowerCase())));
     
     // Filtro por distância (REMOVIDO - não disponível no Profile)
     let distanceMatch = true;
@@ -138,9 +138,6 @@ const Home: React.FC = () => {
               <div className="flex items-center space-x-2">
                 {user && profile ? (
                   <div className="flex items-center space-x-2">
-                    <span className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full capitalize">
-                      {profile.role}
-                    </span>
                     <button
                       onClick={() => signOut()}
                       className="text-xs text-gray-500 hover:text-gray-700 flex items-center space-x-1"

@@ -141,3 +141,9 @@
 3. Adicione informações específicas do seu projeto
 4. Inclua qualquer detalhe que considere importante para a análise
 5. Foque especialmente nas funcionalidades de tempo real e regras de negócio
+
+---
+
+*Última atualização: 18/07/2024*
+
+*Nota: Sempre que este documento for atualizado ou alterado, a data da última alteração deve ser atualizada acima.*

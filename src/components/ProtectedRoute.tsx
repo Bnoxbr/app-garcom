@@ -46,7 +46,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
       // Redirect based on user role
       const roleRedirects: Record<UserRole, string> = {
         contratante: '/client/profile',
-        prestador: '/provider/profile',
         admin: '/admin/dashboard'
       }
       

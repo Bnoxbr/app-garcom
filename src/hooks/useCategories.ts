@@ -11,9 +11,9 @@ export const useCategories = () => {
     try {
       setLoading(true)
       const { data, error } = await supabase
-        .from('categories')
+        .from('categorias')
         .select('*')
-        .order('name')
+        .order('nome')
 
       if (error) {
         setError(error.message)

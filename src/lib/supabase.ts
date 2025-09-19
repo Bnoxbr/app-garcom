@@ -17,7 +17,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 const testConnection = async () => {
   console.log('Testando a conexão com o Supabase...')
   try {
-    const { data, error } = await supabase.from('professionals').select('name').limit(1)
+    const { data, error } = await supabase.from('professionals').select('nome_completo').limit(1)
 
     if (error) {
       console.error('ERRO NO TESTE DE CONEXÃO:', error.message)

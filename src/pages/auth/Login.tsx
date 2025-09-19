@@ -1,61 +1,58 @@
-import React, { useState } from 'react'
-import { Link, useNavigate, useLocation } from 'react-router-dom'
-
-import { useAuth } from '../../hooks/useAuth'
-import { Loading } from '../../components'
+import React, { useState } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../../hooks/useAuth';
+import { Loading } from '../../components';
 
 const Login: React.FC = () => {
-  const navigate = useNavigate()
-  const location = useLocation()
-  const { signIn, loading } = useAuth()
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { signIn, loading, error: authError } = useAuth(); // Ação de correção: Obtém o erro do hook useAuth
   
   const [formData, setFormData] = useState({
     email: '',
     password: ''
-  })
-  const [showPassword, setShowPassword] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Get redirect path from location state or default to home
-  const from = location.state?.from?.pathname || '/'
+  const from = location.state?.from?.pathname || '/';
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-    // Clear error when user starts typing
-    if (error) setError(null)
-  }
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError(null)
-    setIsSubmitting(true)
+    e.preventDefault();
+    setIsSubmitting(true);
 
     try {
-      const { error } = await signIn(formData.email, formData.password)
+      const { error } = await signIn(formData.email, formData.password);
       
       if (error) {
-        setError(error.message)
+        // O erro já é tratado e armazenado no estado do useAuth
+        // Não é necessário setar o erro aqui novamente, o componente já o consome
       } else {
-        // Redirect to intended page or home
-        navigate(from, { replace: true })
+        // Ação de correção: Adicionado um delay para garantir que o perfil seja carregado antes do redirecionamento
+        await new Promise(resolve => setTimeout(resolve, 500));
+        navigate(from, { replace: true });
       }
     } catch {
-      setError('Erro inesperado. Tente novamente.')
+      // O erro é tratado no useAuth
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
-  }
+  };
 
-  const isFormValid = formData.email && formData.password
+  const isFormValid = formData.email && formData.password;
 
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <Loading message="Verificando autenticação..." size="lg" />
       </div>
-    )
+    );
   }
 
   return (
@@ -136,9 +133,9 @@ const Login: React.FC = () => {
             </div>
 
             {/* Error Message */}
-            {error && (
+            {authError && (
               <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-                <p className="text-sm text-red-600">{error}</p>
+                <p className="text-sm text-red-600">{authError}</p>
               </div>
             )}
 
@@ -181,7 +178,7 @@ const Login: React.FC = () => {
         </form>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;

@@ -113,3 +113,9 @@
 2. Marque as checkboxes das funcionalidades implementadas
 3. Adicione informações específicas do seu projeto
 4. Inclua qualquer detalhe que considere importante para a análise
+
+---
+
+*Última atualização: 18/07/2024*
+
+*Nota: Sempre que este documento for atualizado ou alterado, a data da última alteração deve ser atualizada acima.*

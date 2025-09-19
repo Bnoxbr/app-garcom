@@ -1,9 +1,9 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { Professional } from '../types';
+import type { Profissional, Profile } from '../types';
 
 interface ProfessionalsGridProps {
-  professionals: Professional[];
+  professionals: (Profissional & Profile)[];
 }
 
 const ProfessionalsGrid: React.FC<ProfessionalsGridProps> = ({ professionals }) => {
@@ -39,7 +39,7 @@ const ProfessionalsGrid: React.FC<ProfessionalsGridProps> = ({ professionals }) 
             <div className="relative" style={{ height: '90px' }}>
               <img
                 src={professional.avatar_url || "/images/default-avatar.svg"}
-                alt={`Foto de ${professional.name}`}
+                alt={`Foto de ${professional.full_name}`}
                 className="w-full h-full object-cover"
                 onError={(e) => {
                   e.currentTarget.src = "/images/default-avatar.svg";
@@ -54,10 +54,10 @@ const ProfessionalsGrid: React.FC<ProfessionalsGridProps> = ({ professionals }) 
                 {/* Nome e categoria - canto superior esquerdo */}
                 <div className="flex-1">
                   <h4 className="font-bold text-gray-900 text-sm truncate leading-tight">
-                    {professional.name}
+                    {professional.full_name}
                   </h4>
                   <p className="text-xs text-gray-600 truncate">
-                    {professional.specialties?.[0] || 'Profissional'}
+                    {professional.especialidades?.[0] || 'Profissional'}
                   </p>
                 </div>
                 

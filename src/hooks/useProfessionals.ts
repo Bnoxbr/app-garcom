@@ -17,7 +17,7 @@ export const useProfessionals = () => {
       const { data, error } = await supabase
         .from('professionals')
         .select('*')
-        .order('name') // Ordena por 'name', que é o nome da coluna na tabela
+        .order('nome_completo') // Ordena por 'nome_completo', que é o nome da coluna na tabela
       
       if (error) {
         console.error('Supabase error:', error);

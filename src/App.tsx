@@ -4,10 +4,9 @@ import { Toaster } from 'sonner';
 import { AuthProvider, useAuthContext } from './hooks/useAuth';
 import { ProtectedRoute, PWAUpdatePrompt, OfflineNotification } from './components';
 import { TooltipProvider } from './components/ui/tooltip';
-import UserProfile from './pages/provider/UserProfile';
+import UserProfile from './pages/profile/UserProfile';
 import ClientProfile from './pages/client/ClientProfile';
-import ProviderDashboard from './pages/provider/Dashboard';
-import ClientDashboard from './pages/client/Dashboard';
+import ClientDashboard from './pages/client/ClientDashboard';
 import Chat from './pages/shared/Chat';
 import AdvancedSearch from './pages/shared/AdvancedSearch';
 import AuctionServices from './pages/shared/AuctionServices';
@@ -28,13 +27,16 @@ const ProfileRedirect: React.FC = () => {
     return <div>Carregando...</div>
   }
   
-  const roleRedirects = {
-    contratante: `/client/profile/${profile.id}`,
-    prestador: `/provider/profile/${profile.id}`,
+  const roleRedirects: { [key: string]: string } = {
+    client: `/client/profile/${profile.id}`,
     admin: '/admin/dashboard'
   }
   
-  return <Navigate to={roleRedirects[profile.role] || '/'} replace />
+  if (profile.role && roleRedirects[profile.role]) {
+    return <Navigate to={roleRedirects[profile.role]} replace />
+  }
+  
+  return <Navigate to="/" replace />
 }
 
 const App: React.FC = () => {
@@ -56,20 +58,8 @@ const App: React.FC = () => {
               <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
               {/* Rotas de perfil unificadas */}
-              <Route path="/provider/profile/:id" element={<ProtectedRoute requiredRoles={['prestador']}><UserProfile userType='prestador' /></ProtectedRoute>} />
               <Route path="/client/profile/:id" element={<ProtectedRoute requiredRoles={['contratante']}><ClientProfile /></ProtectedRoute>} />
-              <Route path="/professional/profile/:id" element={<UserProfile userType='prestador' />} />
-              
-              {/* Rotas protegidas - Provider */}
-              <Route 
-                path="/provider/dashboard" 
-                element={
-                  <ProtectedRoute requiredRoles={['prestador']}>
-                    <ProviderDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              
+
               {/* Rotas protegidas - Client */}
               <Route 
                 path="/profile" 
@@ -77,7 +67,7 @@ const App: React.FC = () => {
                   <ProtectedRoute>
                     <ProfileRedirect />
                   </ProtectedRoute>
-                } 
+                }
               />
               <Route 
                 path="/client/dashboard" 

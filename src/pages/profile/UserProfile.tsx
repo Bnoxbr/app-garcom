@@ -4,16 +4,12 @@ import { supabase } from '../../lib/supabase';
 import { Loading, ErrorMessage } from '../../components';
 
 // Importa os tipos de dados
-import type { Professional, Profile } from '../../types';
+import type { Profile, Profissional, Contratante } from '../../types';
 
-interface UserProfileProps {
-  userType: 'prestador' | 'contratante';
-}
-
-const UserProfile: React.FC<UserProfileProps> = ({ userType }) => {
+const UserProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [profile, setProfile] = useState<Professional | Profile | null>(null);
+  const [profile, setProfile] = useState<(Profissional | Contratante) & Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('sobre');
@@ -29,34 +25,44 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType }) => {
 
       try {
         setLoading(true);
-        let tableName = '';
-        let profileType = '';
-        
-        if (userType === 'prestador') {
-          tableName = 'professionals';
-          profileType = 'professional';
-        }
-        else if (userType === 'contratante') {
-          tableName = 'profiles';
-          profileType = 'profile';
-        }
 
-        const { data, error } = await supabase
-          .from(tableName)
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
           .select('*')
           .eq('id', id)
           .single();
 
-        if (error) {
-          throw error;
+        if (profileError) throw profileError;
+        if (!profileData) {
+          setError('Perfil não encontrado.');
+          return;
         }
 
-        if (data) {
-          console.log(`Perfil carregado (${profileType}):`, data);
-          setProfile(data);
-        } else {
-          setError('Perfil não encontrado.');
+        let specificProfileData: Contratante | Profissional | null = null;
+        let specificProfileError: any = null;
+
+        if (profileData.role === 'profissional') {
+          const { data, error } = await supabase
+            .from('profissionais')
+            .select('*')
+            .eq('id', id)
+            .single();
+          specificProfileData = data;
+          specificProfileError = error;
+        } else if (profileData.role === 'contratante') {
+          const { data, error } = await supabase
+            .from('contratantes')
+            .select('*')
+            .eq('id', id)
+            .single();
+          specificProfileData = data;
+          specificProfileError = error;
         }
+
+        if (specificProfileError) throw specificProfileError;
+
+        setProfile({ ...profileData, ...specificProfileData });
+
       } catch (err: any) {
         setError(err.message);
       } finally {
@@ -64,12 +70,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType }) => {
       }
     };
 
-    // Removida a verificação de usuário autenticado para permitir visualização pública
     fetchProfile();
-  }, [id, userType]);
+  }, [id]);
 
 
-  // Exibe loading ou erro
   if (loading) {
     return <Loading message="Carregando perfil..." />;
   }
@@ -82,11 +86,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType }) => {
     return <ErrorMessage message="Nenhum perfil encontrado." onRetry={() => {}} />;
   }
   
-  // Verifica se é um profissional
-  const isProfessional = userType === 'prestador';
-  const professional = isProfessional ? profile as Professional : null;
+  const isProfessional = profile.role === 'profissional';
+  const professional = isProfessional ? profile as (Profissional & Profile) : null;
+  const contratante = !isProfessional ? profile as (Contratante & Profile) : null;
 
-  // Lógica para renderização da página
   return (
     <div className="relative min-h-screen bg-gray-50 text-gray-800 pb-16">
       {/* Nav Bar */}
@@ -116,43 +119,16 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType }) => {
           <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-md mb-3">
             <img
               src={profile?.avatar_url || "/images/default-avatar.svg"}
-              alt={`Foto de ${profile?.name || 'perfil'}`}
+              alt={`Foto de ${profile.full_name}`}
               className="w-full h-full object-cover"
               onError={(e) => {
                 e.currentTarget.src = "/images/default-avatar.svg";
               }}
             />
           </div>
-          <h2 className="text-2xl font-bold">{profile?.name}</h2>
-          {isProfessional && (
-            <p className="text-gray-600 mb-2">{professional?.category?.name || 'Profissional'}</p>
-          )}
-          
-          {isProfessional && (
-            <div className="flex items-center justify-center space-x-4 mb-4">
-              <div className="flex items-center text-yellow-500">
-                <i className="fas fa-star mr-1"></i>
-                <span className="font-medium">{professional?.rating || '0.0'}</span>
-                <span className="text-gray-500 ml-1">({professional?.reviews || '0'})</span>
-              </div>
-              {professional?.distance && (
-                <>
-                  <div className="w-1 h-4 bg-gray-300"></div>
-                  <div className="flex items-center text-gray-600">
-                    <i className="fas fa-map-marker-alt mr-1"></i>
-                    <span>{professional.distance}</span>
-                  </div>
-                </>
-              )}
-              {professional?.available && (
-                <>
-                  <div className="w-1 h-4 bg-gray-300"></div>
-                  <div className="bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full">
-                    Disponível agora
-                  </div>
-                </>
-              )}
-            </div>
+          <h2 className="text-2xl font-bold">{isProfessional ? professional?.full_name : contratante?.nome_fantasia}</h2>
+          {isProfessional && professional?.categoria && (
+            <p className="text-gray-600 mb-2">{professional.categoria}</p>
           )}
         </div>
 
@@ -230,11 +206,24 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType }) => {
                 )}
               </div>
 
-              {isProfessional && professional?.specialties && professional.specialties.length > 0 && (
+              {!isProfessional && contratante && (
+                <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+                  <h3 className="font-semibold mb-3">Informações da Empresa</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium text-gray-500">Nome Fantasia</p>
+                      <p className="text-sm text-gray-900">{contratante.nome_fantasia}</p>
+                    </div>
+                    {/* Removido razao_social que não existe */}
+                  </div>
+                </div>
+              )}
+
+              {isProfessional && professional?.especialidades && professional.especialidades.length > 0 && (
                 <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
                   <h3 className="font-semibold mb-3">Habilidades</h3>
                   <div className="flex flex-wrap gap-2">
-                    {professional.specialties.map((specialty, index) => (
+                    {professional.especialidades.map((specialty: string, index: number) => (
                       <span key={index} className="bg-gray-100 text-gray-700 text-xs px-3 py-1 rounded-full">
                         {specialty}
                       </span>
@@ -243,39 +232,24 @@ const UserProfile: React.FC<UserProfileProps> = ({ userType }) => {
                 </div>
               )}
 
-              {isProfessional && professional?.phone && (
-                <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-                  <h3 className="font-semibold mb-3">Contato</h3>
+              <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
+                <h3 className="font-semibold mb-3">Contato</h3>
+                {isProfessional && professional?.telefone && (
                   <div className="flex items-center">
                     <i className="fas fa-phone text-gray-500 mr-2"></i>
-                    <span className="text-gray-700">{professional.phone}</span>
+                    <span className="text-gray-700">{professional.telefone}</span>
                   </div>
-                  {professional.email && (
-                    <div className="flex items-center mt-2">
-                      <i className="fas fa-envelope text-gray-500 mr-2"></i>
-                      <span className="text-gray-700">{professional.email}</span>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {isProfessional && professional?.address && (
-                <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-                  <h3 className="font-semibold mb-3">Localização</h3>
-                  <div className="flex items-start">
-                    <i className="fas fa-map-marker-alt text-gray-500 mt-1 mr-2"></i>
-                    <div>
-                      <p className="text-sm text-gray-700">
-                        {professional.address.street}, {professional.address.number}
-                        {professional.address.complement && `, ${professional.address.complement}`}
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        {professional.address.neighborhood}, {professional.address.city} - {professional.address.state}
-                      </p>
-                      <p className="text-sm text-gray-700">
-                        CEP: {professional.address.cep}
-                      </p>
-                    </div>
+                )}
+              </div>
+              {isProfessional && professional && (
+                <div className="bg-white rounded-lg shadow-sm p-4">
+                  <h3 className="font-semibold mb-2">Especialidades</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {professional.especialidades?.map((specialty: string, index: number) => (
+                      <span key={index} className="bg-gray-200 text-gray-800 text-xs font-medium px-2.5 py-1 rounded-full">
+                        {specialty}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}

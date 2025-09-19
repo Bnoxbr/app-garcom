@@ -1,10 +1,106 @@
-// Types for Mr. Staffer - Two-sided marketplace for hospitality services
+// Types for App Garçom - Two-sided marketplace for hospitality services
 
-export type UserRole = 'contratante' | 'prestador' | 'admin'
+export type UserRole = 'contratante' | 'profissional' | 'admin'
+
+// Adicionando a interface Profile que está faltando
+export interface Profile {
+  id: string;
+  updated_at?: string;
+  username?: string;
+  full_name?: string;
+  avatar_url?: string;
+  website?: string;
+  role?: UserRole;
+  nome_completo?: string;
+  nome_fantasia?: string;
+  telefone?: string;
+  bio?: string;
+  cnpj?: string;
+  endereco?: string;
+  categoria?: string;
+  especialidades?: string[];
+  anos_experiencia?: number;
+  formacao?: string[];
+  disponibilidade_semanal?: object;
+  valor_hora?: number;
+  dados_mei?: object;
+  dados_financeiros?: object;
+}
 
 // Exportar tipos de leilão
 export * from './auction'
 
+// --- Interfaces do Banco de Dados ---
+
+// Tabela 'users'
+export interface User {
+  id: string
+  email: string
+  name: string
+  phone?: string
+  address?: string
+  role?: UserRole
+  created_at?: string
+  updated_at?: string
+}
+
+// Tabela 'contratantes'
+export interface Contratante {
+  id: string
+  nome_fantasia: string
+  cnpj: string
+  endereco: string
+  // Campos adicionais do formulário de perfil
+  description?: string
+  document?: string
+  document_type: 'cpf' | 'cnpj'
+  company_name?: string
+  company_address?: string
+  company_contact?: string
+  company_representative?: string
+  payment_methods?: string[]
+  saved_credit_cards?: any[]
+  bitcoin_wallet?: string
+  created_at?: string
+  updated_at?: string
+}
+
+// Tabela 'profissionais'
+export interface Profissional {
+  id: string
+  nome_completo: string
+  telefone: string
+  bio?: string
+  categoria?: string
+  especialidades?: string[]
+  anos_experiencia?: number
+  formacao?: string[]
+  disponibilidade_semanal?: object
+  valor_hora?: number
+  dados_mei?: object
+  dados_financeiros?: object
+  // Campos adicionais do formulário de perfil
+  avatar_url?: string
+  rating?: number
+  reviews?: number
+  distance?: string
+  available?: boolean
+  price?: string
+  description?: string
+  created_at?: string
+  updated_at?: string
+}
+
+// Tabela 'categories'
+export interface Categorias {
+  id: string
+  name: string
+  icon: string
+  created_at?: string
+  updated_at?: string
+}
+
+// Tabela 'regioes'
 export interface Regiao {
   id: string
   nome: string
@@ -15,21 +111,65 @@ export interface Regiao {
   updated_at?: string
 }
 
-export interface Category {
+// Tabela 'experiences'
+export interface Experience {
   id: string
-  name: string
-  icon: string
+  titulo: string
+  descricao: string
+  preco: number
+  duracao: number
+  regiao_id: string
+  categoria_id: string
+  imagem_url: string
+  rating?: number
+  total_avaliacoes?: number
+  ativo: boolean
+  featured: boolean
   created_at?: string
   updated_at?: string
 }
 
-// Especialidades de hospitalidade
-export interface Specialty {
-  id: string
-  name: string
-  category: 'garcom' | 'chef' | 'bartender' | 'sommelier' | 'copeiro' | 'auxiliar_cozinha'
-  description?: string
+// Tabela 'bookings' (anteriormente 'servicos_realizados')
+export interface Booking {
+  id: string;
+  service_date: string;
+  price: number;
+  job_description: string;
+  client_id: string;
+  provider_id: string;
+  client?: Partial<Profile>;
+  professional?: Partial<Profile>;
+  status?: 'pending' | 'confirmed' | 'completed' | 'cancelled';
+  payment_status?: 'unpaid' | 'paid' | 'released';
+  provider_checkin_time?: string | null;
+  client_checkin_time?: string | null;
+  provider_checked_in?: boolean;
+  client_checked_in?: boolean;
 }
+
+export interface Payment {
+  id: string;
+  booking_id: string;
+  amount: number;
+  status: string;
+  is_advance_payment: boolean;
+  funds_status: 'held' | 'released' | 'refunded';
+  service_confirmed_at?: string;
+  created_at?: string;
+}
+
+// Tabela 'avaliacoes'
+export interface Avaliacao {
+  id: string
+  id_servico: string
+  id_avaliador: string
+  id_avaliado: string
+  nota: number
+  comentario: string
+  created_at?: string
+}
+
+// --- Interfaces de Componentes ---
 
 // Dados bancários
 export interface BankingData {
@@ -42,7 +182,7 @@ export interface BankingData {
   bank_account_type?: 'corrente' | 'poupanca'
 }
 
-// Dados de cartão de crédito (apenas tokens, sem dados sensíveis)
+// Dados de cartão de crédito (apenas tokens)
 export interface CreditCard {
   id: string
   last_four: string
@@ -66,94 +206,6 @@ export interface Address {
   country: string
 }
 
-// Profissional atualizado para Mr. Staffer
-export interface Professional {
-  id: string
-  name: string
-  email?: string
-  avatar_url?: string
-  category: {
-    id: string
-    name: string
-  }
-  specialties?: string[]
-  rating?: number
-  reviews?: number
-  distance?: string
-  available?: boolean
-  price?: string
-  bio?: string
-  description?: string
-  created_at?: string
-  updated_at?: string
-  phone?: string
-  document?: string
-  address?: Address
-}
-
-// Profile expandido para Mr. Staffer
-export interface Profile {
-  id: string
-  name: string
-  full_name: string
-  email: string
-  role: UserRole
-  avatar_url?: string
-  phone?: string
-  bio?: string
-
-  // Documentação
-  document: string
-  document_type: 'cpf' | 'cnpj'
-  mei_number?: string
-
-  // Endereço
-  address?: Address
-
-  // Para prestadores
-  specialties?: string[]
-  hourly_rate?: number
-  experience_years?: number
-  portfolio_images?: string[]
-
-  // Dados bancários
-  banking_data?: BankingData
-
-  // Dados da empresa (quando document_type = cnpj)
-  company_name?: string
-  company_address?: Address
-  company_phone?: string
-  company_email?: string
-  company_website?: string
-  company_representative_name?: string
-  company_representative_position?: string
-  company_representative_document?: string
-
-  // Dados financeiros
-  payment_methods?: any[]
-  saved_credit_cards?: any[]
-  bitcoin_wallet?: string
-
-  // Avaliações
-  rating?: number
-  reviews_count?: number
-}
-
-// Tipo para eventos
-export interface Event {
-  id: string
-  title: string
-  description: string
-  date: string
-  time: string
-  location: string
-  client_id: string
-  status: 'pending' | 'confirmed' | 'cancelled' | 'completed'
-  professionals: Professional[]
-  created_at: string
-  updated_at: string
-}
-
 // Tipo para mensagens
 export interface Message {
   id: string
@@ -162,37 +214,4 @@ export interface Message {
   content: string
   read: boolean
   created_at: string
-}
-
-// Tipo para avaliações
-export interface Review {
-  id: string
-  reviewer_id: string
-  professional_id: string
-  event_id: string
-  rating: number
-  comment: string
-  created_at: string
-}
-
-export interface User {
-  id: string
-  email: string
-  name: string
-  phone?: string
-  address?: string
-  created_at?: string
-  updated_at?: string
-}
-
-export interface Booking {
-  id: string
-  user_id: string
-  professional_id: string
-  service_date: string
-  service_time: string
-  status: 'pending' | 'confirmed' | 'completed' | 'cancelled'
-  notes?: string
-  created_at?: string
-  updated_at?: string
 }

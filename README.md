@@ -123,3 +123,9 @@ O sistema de autenticação inclui:
 ## 📄 Status do Projeto
 
 Para informações detalhadas sobre o status atual do projeto, consulte o arquivo [PROJETO_STATUS_ATUAL.md](./PROJETO_STATUS_ATUAL.md).
+
+---
+
+*Última atualização: 18/07/2024*
+
+*Nota: Sempre que este documento for atualizado ou alterado, a data da última alteração deve ser atualizada acima.*
