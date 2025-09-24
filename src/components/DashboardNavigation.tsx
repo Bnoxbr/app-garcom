@@ -10,7 +10,7 @@ const DashboardNavigation: React.FC<DashboardNavigationProps> = ({ activeTab = '
   const navigate = useNavigate();
   const { profile } = useAuthContext();
 
-  const isProvider = profile?.role === 'prestador';
+  const isProvider = profile?.role === 'profissional';
   const isClient = profile?.role === 'contratante';
   const isAdmin = profile?.role === 'admin';
 

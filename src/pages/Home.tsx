@@ -14,7 +14,7 @@ const Home: React.FC = () => {
   const { signOut } = useAuth();
   
   // Hooks do Supabase
-  const { professionals, loading: professionalsLoading, error: professionalsError, refetch: refetchProfessionals } = useProfessionals();
+  const { professionals, loading: professionalsLoading, error: professionalsError, fetchProfessionals: refetchProfessionals } = useProfessionals();
   const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategories();
 
 
@@ -59,11 +59,11 @@ const Home: React.FC = () => {
 
   const filteredProfessionals = (professionals || []).filter(professional => {
     // Filtro por categoria
-    const categoryMatch = selectedCategory === 'Todos' || (professional.specialties && professional.specialties.includes(selectedCategory));
+    const categoryMatch = selectedCategory === 'Todos' || (professional.especialidades && professional.especialidades.includes(selectedCategory));
     
     // Filtro por termo de busca
     const searchMatch = (professional.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (professional.specialties && Array.isArray(professional.specialties) && professional.specialties.some((s: string) => (s || '').toLowerCase().includes(searchTerm.toLowerCase())));
+    (professional.especialidades && Array.isArray(professional.especialidades) && professional.especialidades.some((s: string) => (s || '').toLowerCase().includes(searchTerm.toLowerCase())));
     
     // Filtro por distância (REMOVIDO - não disponível no Profile)
     let distanceMatch = true;
@@ -72,9 +72,9 @@ const Home: React.FC = () => {
     let availabilityMatch = true;
     
     // Filtro por rating
-    const ratingMatch = (professional.rating || 0) >= parseFloat(filters.rating);
+    // const ratingMatch = (professional.rating || 0) >= parseFloat(filters.rating);
     
-    return categoryMatch && searchMatch && distanceMatch && availabilityMatch && ratingMatch;
+    return categoryMatch && searchMatch && distanceMatch && availabilityMatch;
   });
 
   // Verificar se há erros

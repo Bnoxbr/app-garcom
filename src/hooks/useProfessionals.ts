@@ -1,55 +1,44 @@
-// useProfessionals.ts
+import { useState, useEffect, useCallback } from 'react';
+import { supabase } from '../lib/supabase';
+import type { Profissional, UserRole } from '../types/index';
 
-import { useState, useEffect } from 'react'
-import { supabase } from '../lib/supabase'
-import type { Professional } from '../types/index'
+// Combinando as interfaces para o resultado esperado
+export interface ProfessionalWithProfile extends Profissional {
+  // These fields come from the 'profiles' table via the RPC function
+  full_name: string;
+  role: UserRole;
+}
 
-export const useProfessionals = () => {
-  const [professionals, setProfessionals] = useState<Professional[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+export function useProfessionals() {
+  const [professionals, setProfessionals] = useState<ProfessionalWithProfile[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const fetchProfessionals = async () => {
+  const fetchProfessionals = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+
     try {
-      setLoading(true)
+      const { data, error: rpcError } = await supabase.rpc('get_all_professionals_with_profiles');
 
-      // Busca todos os profissionais da tabela 'professionals'
-      const { data, error } = await supabase
-        .from('professionals')
-        .select('*')
-        .order('nome_completo') // Ordena por 'nome_completo', que é o nome da coluna na tabela
-      
-      if (error) {
-        console.error('Supabase error:', error);
-        setError(error.message)
-        setLoading(false)
-        return
+      if (rpcError) {
+        console.error('Erro ao buscar profissionais via RPC:', rpcError);
+        throw new Error(`Erro na chamada RPC: ${rpcError.message}`);
       }
 
-      console.log('Supabase data:', data);
-      
-      setProfessionals(data || [])
-      setLoading(false)
+      setProfessionals(data || []);
 
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao carregar profissionais')
-      setLoading(false)
-      console.error('Erro ao buscar profissionais:', err)
+    } catch (err: any) {
+      console.error('Falha ao buscar profissionais:', err);
+      setError(err.message || 'Ocorreu um erro ao carregar os profissionais.');
+    } finally {
+      setLoading(false);
     }
-  }
+  }, []);
 
   useEffect(() => {
-    fetchProfessionals()
-  }, [])
+    fetchProfessionals();
+  }, [fetchProfessionals]);
 
-  const refetch = () => {
-    fetchProfessionals()
-  }
-
-  return {
-    professionals,
-    loading,
-    error,
-    refetch
-  }
+  return { professionals, loading, error, fetchProfessionals };
 }

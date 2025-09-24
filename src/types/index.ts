@@ -2,7 +2,7 @@
 
 export type UserRole = 'contratante' | 'profissional' | 'admin'
 
-// Adicionando a interface Profile que está faltando
+// A interface Profile deve conter apenas os campos da tabela 'profiles' do Supabase.
 export interface Profile {
   id: string;
   updated_at?: string;
@@ -11,20 +11,6 @@ export interface Profile {
   avatar_url?: string;
   website?: string;
   role?: UserRole;
-  nome_completo?: string;
-  nome_fantasia?: string;
-  telefone?: string;
-  bio?: string;
-  cnpj?: string;
-  endereco?: string;
-  categoria?: string;
-  especialidades?: string[];
-  anos_experiencia?: number;
-  formacao?: string[];
-  disponibilidade_semanal?: object;
-  valor_hora?: number;
-  dados_mei?: object;
-  dados_financeiros?: object;
 }
 
 // Exportar tipos de leilão
@@ -50,6 +36,8 @@ export interface Contratante {
   nome_fantasia: string
   cnpj: string
   endereco: string
+  telefone?: string
+  avatar_url?: string; // Adicionado para consistência
   // Campos adicionais do formulário de perfil
   description?: string
   document?: string
@@ -68,7 +56,8 @@ export interface Contratante {
 // Tabela 'profissionais'
 export interface Profissional {
   id: string
-  nome_completo: string
+  nome_completo?: string
+  full_name?: string
   telefone: string
   bio?: string
   categoria?: string
@@ -92,7 +81,7 @@ export interface Profissional {
 }
 
 // Tabela 'categories'
-export interface Categorias {
+export interface Category {
   id: string
   name: string
   icon: string

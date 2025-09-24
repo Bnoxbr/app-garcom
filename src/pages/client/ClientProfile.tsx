@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { useAuthContext } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
@@ -9,7 +9,7 @@ import type { Contratante } from '../../types';
 
 const ClientProfile: React.FC = () => {
   const { id } = useParams<{ id: string }>();
-  const { user, profile: authProfile, loading: authLoading, error: authError, updateProfile } = useAuthContext();
+  const { user, loading: authLoading, error: authError, updateProfile } = useAuthContext();
   const [profile, setProfile] = useState<Contratante | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,11 +19,7 @@ const ClientProfile: React.FC = () => {
   const [endereco, setEndereco] = useState('');
   const [document, setDocument] = useState('');
   const [documentType, setDocumentType] = useState<'cpf' | 'cnpj'>('cpf');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [hiringHistory, setHiringHistory] = useState<any[]>([]); // Mock de histórico
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [telefone, setTelefone] = useState('');
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -55,13 +51,7 @@ const ClientProfile: React.FC = () => {
           setEndereco(data.endereco || '');
           setDocument(data.document || '');
           setDocumentType(data.document_type || 'cpf');
-          setPhone(data.phone || '');
-          setEmail(data.email || '');
-          // Mocking photos and history for now
-          setHiringHistory([
-            { id: 1, name: 'João da Silva', position: 'Garçom', photo: 'https://via.placeholder.com/48', status: 'Finalizado', date: '12/09/2023' },
-            { id: 2, name: 'Maria Souza', position: 'Chef de Cozinha', photo: 'https://via.placeholder.com/48', status: 'Em Andamento', date: '15/09/2023' },
-          ]);
+          setTelefone(data.telefone || '');
         } else {
           setError('Perfil não encontrado.');
         }
@@ -84,8 +74,7 @@ const ClientProfile: React.FC = () => {
       endereco: endereco,
       document: document,
       document_type: documentType,
-      phone: phone,
-      email: email,
+      telefone: telefone,
     };
     
     try {
@@ -170,15 +159,8 @@ const ClientProfile: React.FC = () => {
                   <input
                     type="text"
                     placeholder="Telefone"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    className="w-full p-2 border border-gray-300 rounded-lg text-sm"
-                  />
-                  <input
-                    type="text"
-                    placeholder="Email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    value={telefone}
+                    onChange={(e) => setTelefone(e.target.value)}
                     className="w-full p-2 border border-gray-300 rounded-lg text-sm"
                   />
                   <input
@@ -198,10 +180,10 @@ const ClientProfile: React.FC = () => {
                     <span className="font-medium">Endereço:</span> {profile.endereco}
                   </p>
                   <p>
-                    <span className="font-medium">Telefone:</span> {profile.phone || 'Não informado'}
+                    <span className="font-medium">Telefone:</span> {profile.telefone || 'Não informado'}
                   </p>
                   <p>
-                    <span className="font-medium">Email:</span> {profile.email || 'Não informado'}
+                    <span className="font-medium">Email:</span> {user?.email || 'Não informado'}
                   </p>
                   <p>
                     <span className="font-medium">CNPJ:</span> {profile.document || 'Não informado'}

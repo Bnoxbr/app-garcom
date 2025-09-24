@@ -5,9 +5,7 @@ import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
 import { useAuth, type UserProfile } from '../../hooks/useAuth';
-import { useCategories } from '../../hooks/useCategories';
 import { Button } from '../../components/ui/button';
-import { Checkbox } from "../../components/ui/checkbox"
 import {
   Card,
   CardContent,

@@ -26,42 +26,20 @@ const UserProfile: React.FC = () => {
       try {
         setLoading(true);
 
-        const { data: profileData, error: profileError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', id)
+        // Chama a nova função SQL para buscar o perfil completo do profissional
+        const { data, error } = await supabase
+          .rpc('get_professional_profile_by_id', { p_id: id })
           .single();
 
-        if (profileError) throw profileError;
-        if (!profileData) {
-          setError('Perfil não encontrado.');
+        if (error) throw error;
+
+        if (!data) {
+          setError('Perfil do profissional não encontrado.');
           return;
         }
 
-        let specificProfileData: Contratante | Profissional | null = null;
-        let specificProfileError: any = null;
-
-        if (profileData.role === 'profissional') {
-          const { data, error } = await supabase
-            .from('profissionais')
-            .select('*')
-            .eq('id', id)
-            .single();
-          specificProfileData = data;
-          specificProfileError = error;
-        } else if (profileData.role === 'contratante') {
-          const { data, error } = await supabase
-            .from('contratantes')
-            .select('*')
-            .eq('id', id)
-            .single();
-          specificProfileData = data;
-          specificProfileError = error;
-        }
-
-        if (specificProfileError) throw specificProfileError;
-
-        setProfile({ ...profileData, ...specificProfileData });
+        // O tipo do perfil é ajustado para corresponder à estrutura de retorno da função
+        setProfile(data as (Profissional & Profile));
 
       } catch (err: any) {
         setError(err.message);

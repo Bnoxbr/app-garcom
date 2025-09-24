@@ -39,13 +39,14 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Check role-based access if roles are specified
-  if (requiredRoles.length > 0 && profile) {
+  if (requiredRoles.length > 0 && profile && profile.role) {
     const hasRequiredRole = requiredRoles.includes(profile.role)
     
     if (!hasRequiredRole) {
       // Redirect based on user role
       const roleRedirects: Record<UserRole, string> = {
         contratante: '/client/profile',
+        profissional: '/provider/dashboard',
         admin: '/admin/dashboard'
       }
       

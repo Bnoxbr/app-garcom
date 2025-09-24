@@ -4,9 +4,9 @@ import { Toaster } from 'sonner';
 import { AuthProvider, useAuthContext } from './hooks/useAuth';
 import { ProtectedRoute, PWAUpdatePrompt, OfflineNotification } from './components';
 import { TooltipProvider } from './components/ui/tooltip';
-import UserProfile from './pages/profile/UserProfile';
 import ClientProfile from './pages/client/ClientProfile';
 import ClientDashboard from './pages/client/ClientDashboard';
+import UserProfile from './pages/profile/UserProfile';
 import Chat from './pages/shared/Chat';
 import AdvancedSearch from './pages/shared/AdvancedSearch';
 import AuctionServices from './pages/shared/AuctionServices';
@@ -57,7 +57,8 @@ const App: React.FC = () => {
               <Route path="/auth/register" element={<Register />} />
               <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
-              {/* Rotas de perfil unificadas */}
+              {/* Rotas de perfil unificadas */}\
+              <Route path="/professional/profile/:id" element={<UserProfile />} />
               <Route path="/client/profile/:id" element={<ProtectedRoute requiredRoles={['contratante']}><ClientProfile /></ProtectedRoute>} />
 
               {/* Rotas protegidas - Client */}

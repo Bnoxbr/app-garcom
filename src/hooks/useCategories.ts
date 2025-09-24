@@ -12,11 +12,11 @@ export const useCategories = () => {
       setLoading(true)
       const { data, error } = await supabase
         .from('categorias')
-        .select('*')
+        .select('id, name:nome, icon:icone')
         .order('nome')
 
       if (error) {
-        setError(error.message)
+        setError(error.message) 
         setCategories([]) // Limpa as categorias em caso de erro
         setLoading(false)
         return

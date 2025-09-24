@@ -3,6 +3,8 @@ import type { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { Profile, Contratante } from '../types';
 
+export type UserRole = 'admin' | 'contratante' | 'profissional';
+
 export type UserProfile = Profile & Contratante;
 
 export interface AuthState {
