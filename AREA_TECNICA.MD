@@ -26,10 +26,7 @@ Este documento descreve a arquitetura e implementação de um sistema de chat em
 2.  **Realtime (Supabase):**
     *   Utiliza websockets para transmitir mensagens em tempo real.
     *   Os clientes se inscrevem em "canais" específicos (por exemplo, um canal por conversa).
-3.  **Edge Functions (Deno):**
-    *   Lógica de negócios mais complexa, como o envio de notificações push.
-    *   Validação de dados e processamento de eventos.
-4.  **Cliente (React/Next.js):**
+3.  **Cliente (React/Next.js):**
     *   Interface do usuário para o chat.
     *   Utiliza a biblioteca `supabase-js` para interagir com o backend.
 

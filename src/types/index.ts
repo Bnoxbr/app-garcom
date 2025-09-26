@@ -14,7 +14,7 @@ export interface Profile {
 }
 
 // Exportar tipos de leilão
-export * from './auction'
+export type { Auction, AuctionBid } from './auction';
 
 // --- Interfaces do Banco de Dados ---
 

@@ -308,7 +308,7 @@ const ClientProfile: React.FC = () => {
                                 <h3 className="font-semibold text-lg mb-4">Meus Leilões</h3>
                                 <div className="flex flex-col sm:flex-row gap-4">
                                     <button 
-                                        onClick={() => navigate('/auctions/new')}
+                                        onClick={() => navigate('/auctions/create')}
                                         className="flex-1 text-center px-4 py-3 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-colors duration-200"
                                     >
                                         <i className="fas fa-plus-circle mr-2"></i>

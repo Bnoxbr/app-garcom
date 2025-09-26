@@ -9,6 +9,7 @@ import UserProfile from '@/pages/profile/UserProfile';
 import ClientProfile from '@/pages/client/ClientProfile';
 import CreateAuction from '@/pages/auctions/CreateAuction';
 import MyAuctions from '@/pages/auctions/MyAuctions'; // Importa a nova página
+import AuctionDetails from '@/pages/auctions/AuctionDetails'; // Importa a página de detalhes
 import Chat from '@/pages/shared/Chat';
 import AdvancedSearch from '@/pages/shared/AdvancedSearch';
 import AuctionServices from '@/pages/shared/AuctionServices';
@@ -100,6 +101,14 @@ const App: React.FC = () => {
                             element={
                                 <ProtectedRoute requiredRoles={['contratante']}>
                                     <MyAuctions />
+                                </ProtectedRoute>
+                            } 
+                        />
+                        <Route 
+                            path="/auctions/:id" 
+                            element={
+                                <ProtectedRoute>
+                                    <AuctionDetails />
                                 </ProtectedRoute>
                             } 
                         />
