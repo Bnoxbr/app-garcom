@@ -1,6 +1,6 @@
 // The exported code uses Tailwind CSS. Install Tailwind CSS in your dev environment to ensure all styles work.
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useProfessionals } from '../hooks/useProfessionals'
 import { useCategories } from '../hooks/useCategories'
@@ -57,25 +57,27 @@ const Home: React.FC = () => {
 
   // Dados agora vêm dos hooks do Supabase
 
-  const filteredProfessionals = (professionals || []).filter(professional => {
-    // Filtro por categoria
-    const categoryMatch = selectedCategory === 'Todos' || (professional.especialidades && professional.especialidades.includes(selectedCategory));
-    
-    // Filtro por termo de busca
-    const searchMatch = (professional.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (professional.especialidades && Array.isArray(professional.especialidades) && professional.especialidades.some((s: string) => (s || '').toLowerCase().includes(searchTerm.toLowerCase())));
-    
-    // Filtro por distância (REMOVIDO - não disponível no Profile)
-    let distanceMatch = true;
-    
-    // Filtro por disponibilidade (Temporarily disabled as 'available' property is missing)
-    let availabilityMatch = true;
-    
-    // Filtro por rating
-    // const ratingMatch = (professional.rating || 0) >= parseFloat(filters.rating);
-    
-    return categoryMatch && searchMatch && distanceMatch && availabilityMatch;
-  });
+  const filteredProfessionals = useMemo(() => {
+    return (professionals || []).filter(professional => {
+      // Filtro por categoria
+      const categoryMatch = selectedCategory === 'Todos' || (professional.especialidades && professional.especialidades.includes(selectedCategory));
+      
+      // Filtro por termo de busca
+      const searchMatch = (professional.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (professional.especialidades && Array.isArray(professional.especialidades) && professional.especialidades.some((s: string) => (s || '').toLowerCase().includes(searchTerm.toLowerCase())));
+      
+      // Filtro por distância (REMOVIDO - não disponível no Profile)
+      let distanceMatch = true;
+      
+      // Filtro por disponibilidade (Temporarily disabled as 'available' property is missing)
+      let availabilityMatch = true;
+      
+      // Filtro por rating
+      // const ratingMatch = (professional.rating || 0) >= parseFloat(filters.rating);
+      
+      return categoryMatch && searchMatch && distanceMatch && availabilityMatch;
+    });
+  }, [professionals, selectedCategory, searchTerm]);
 
   // Verificar se há erros
   if (professionalsError || categoriesError) {

@@ -1,12 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react'; // <--- Removido o 'React'
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuthContext } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
-import type { ProfessionalWithProfile } from '../../hooks/useProfessionals';
-import { Loading } from '../../components';
-import { ErrorMessage } from '../../components';
+import { Loading, ErrorMessage } from '../../components';
 
-// Tipagem baseada no tipo de retorno da nossa função RPC
-type ProfessionalProfile = ProfessionalWithProfile;
+// Importa os tipos de dados
+import type { Contratante } from '../../types';
+// Importe o tipo ProfessionalWithProfile ou o tipo de retorno exato da sua função RPC
+type ProfessionalProfile = any; // Usando 'any' temporariamente, mas deve ser o tipo exato do retorno da RPC
 
 const UserProfile = () => {
     // ---------------------------------------------------
@@ -14,6 +15,7 @@ const UserProfile = () => {
     // ---------------------------------------------------
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
+    const { user, loading: authLoading, error: authError, } = useAuthContext(); // <--- Removido o ', updateProfile'
     const [profile, setProfile] = useState<ProfessionalProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -21,25 +23,27 @@ const UserProfile = () => {
     // ESTADOS PARA CONTROLE VISUAL (MANTIDOS DO MOCKUP)
     const [activeTab, setActiveTab] = useState('sobre');
     const [showFullBio, setShowFullBio] = useState(false);
-    const [selectedDay, setSelectedDay] = useState('Segunda'); // Para a aba Disponibilidade (se implementada)
+    // Removido selectedDay que não era usado na função original.
 
     // ---------------------------------------------------
     // 2. LÓGICA DE BUSCA DE DADOS (USE EFFECT)
     // ---------------------------------------------------
     useEffect(() => {
         const fetchProfile = async () => {
-            if (!id) {
+            setLoading(true);
+            setError(null);
+
+            const userId = id || user?.id;
+
+            if (!userId) {
                 setLoading(false);
                 setError("ID do perfil não fornecido.");
                 return;
             }
 
-            setLoading(true);
-            setError(null);
-
             try {
                 // Chamada à função RPC, passando o ID do profissional como o parâmetro 'p_id'
-                const { data, error: rpcError } = await supabase.rpc('get_professional_profile_by_id', { p_id: id });
+                const { data, error: rpcError } = await supabase.rpc('get_professional_profile_by_id', { p_id: userId });
 
                 if (rpcError) {
                     console.error('Erro ao buscar perfil do profissional:', rpcError);
@@ -47,7 +51,6 @@ const UserProfile = () => {
                 }
 
                 if (data && data.length > 0) {
-                    // A função RPC retorna um array, pegamos o primeiro item.
                     setProfile(data[0]);
                 } else {
                     setError('Perfil não encontrado.');
@@ -60,33 +63,32 @@ const UserProfile = () => {
         };
 
         fetchProfile();
-    }, [id]);
+    }, [id, user]); // Dependências corrigidas: removido 'profile'
 
     // ---------------------------------------------------
     // 3. CHECAGENS DE ESTADO INICIAL
     // ---------------------------------------------------
-    if (loading) {
+    if (authLoading || loading) {
         return <Loading message="Carregando perfil..." />;
     }
 
-    if (error) {
-        return <ErrorMessage message={error} onRetry={() => fetchProfile()} />; // Adiciona retry
+    if (authError || error) {
+        return <ErrorMessage message={authError || error || "Ocorreu um erro."} onRetry={() => window.location.reload()} />;
     }
     
-    if (!profile) {
-        return <ErrorMessage message="Nenhum perfil encontrado." onRetry={() => fetchProfile()} />;
-    }
-
+    // ... (restante do código que lida com a renderização) ...
+    
     // ---------------------------------------------------
     // 4. PREPARAÇÃO DOS DADOS PARA O JSX (Mapeamento e Filtro)
     // ---------------------------------------------------
-    const isProfessional = profile.role === 'professional'; // Filtro de Papel
+    // Assume que a RPC retorna o perfil do Contratante se for o caso
+    const isProfessional = profile.role === 'professional'; 
     const professional = isProfessional ? profile as ProfessionalProfile : null;
-    const contratante = !isProfessional ? profile as any : null; // Assumindo o tipo Contratante/Empresa
+    const contratante = !isProfessional ? profile as Contratante : null; 
 
     // Variáveis para preencher o visual rico
-    const profileAvatar = professional?.avatar_url || "/images/default-avatar.svg";
-    const profileName = professional?.full_name || professional?.nome_completo || 'N/A';
+    const profileAvatar = profile?.avatar_url || "/images/default-avatar.svg";
+    const profileName = professional?.full_name || professional?.nome_completo || contratante?.nome_fantasia || 'N/A';
     const profileCategory = professional?.categoria || 'Profissional';
     const hourlyRate = professional?.valor_hora ? `R$ ${professional.valor_hora.toFixed(2).replace('.', ',')}` : 'R$ N/A';
     
@@ -105,19 +107,13 @@ const UserProfile = () => {
     // ---------------------------------------------------
     return (
         <div className="relative min-h-screen bg-gray-50 text-gray-800 pb-16">
-            {/* Nav Bar (Completo: Botão Voltar + Compartilhar/Opções) */}
+            {/* Nav Bar */}
             <div className="fixed top-0 w-full bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-md z-10">
-    <div className="flex items-center justify-between px-4 py-3">
-        <div className="flex items-center">
-            {/* O BOTÃO VOLTAR COM A LÓGICA */}
-            <button 
-                onClick={() => navigate(-1)}
-                className="flex items-center cursor-pointer p-2 -ml-2 rounded-full hover:bg-gray-700" 
-            >
-                <i className="fas fa-arrow-left text-lg mr-3"></i>
-            </button>
-            <h1 className="text-lg font-medium">Perfil Profissional</h1>
-        </div>
+                <div className="flex items-center justify-between px-4 py-3">
+                    <div className="flex items-center">
+                        <button onClick={() => navigate(-1)} className="flex items-center cursor-pointer p-2 -ml-2 rounded-full hover:bg-gray-700"><i className="fas fa-arrow-left text-lg mr-3"></i></button>
+                        <h1 className="text-lg font-medium">{isProfessional ? 'Perfil Profissional' : 'Perfil da Empresa'}</h1>
+                    </div>
                     <div className="flex items-center">
                         <button className="p-2 rounded-full hover:bg-gray-800 cursor-pointer"><i className="fas fa-share-alt text-lg"></i></button>
                     </div>

@@ -21,173 +21,178 @@ import ForgotPassword from './pages/auth/ForgotPassword';
 
 // Componente para redirecionar baseado no role do usuário
 const ProfileRedirect: React.FC = () => {
-  const { profile } = useAuthContext()
-  
-  if (!profile) {
-    return <div>Carregando...</div>
-  }
-  
-  const roleRedirects: { [key: string]: string } = {
-    client: `/client/profile/${profile.id}`,
-    admin: '/admin/dashboard'
-  }
-  
-  if (profile.role && roleRedirects[profile.role]) {
-    return <Navigate to={roleRedirects[profile.role]} replace />
-  }
-  
-  return <Navigate to="/" replace />
-}
+    const { profile } = useAuthContext();
+    
+    if (!profile) {
+        return <div>Carregando...</div>;
+    }
+    
+    // Mapeamento de redirecionamento para cada papel
+    const roleRedirects: { [key: string]: string } = {
+        contratante: `/client/profile/${profile.id}`,
+        profissional: `/professional/profile/${profile.id}`, // CORREÇÃO: Adicionado redirecionamento para profissionais
+        admin: '/admin/dashboard',
+        // Adicione outros papéis aqui se necessário
+    };
+    
+    // CORREÇÃO: Verifique se o papel existe no mapeamento antes de tentar redirecionar
+    if (profile.role && roleRedirects[profile.role]) {
+        return <Navigate to={roleRedirects[profile.role]} replace />;
+    }
+    
+    // Se o papel não for mapeado, redirecione para a Home (ou uma página de erro)
+    return <Navigate to="/" replace />;
+};
 
 const App: React.FC = () => {
-  return (
-    <AuthProvider>
-      <TooltipProvider>
-        <div className="min-h-screen bg-gray-50">
-          <OfflineNotification />
-          <Routes>
-              {/* Rotas públicas */}
-              <Route path="/" element={<Home />} />
-              <Route path="/home" element={<Home />} />
-              <Route path="/search" element={<AdvancedSearch />} />
-              <Route path="/advanced-search" element={<AdvancedSearch />} />
-              
-              {/* Rotas de autenticação */}
-              <Route path="/auth/login" element={<Login />} />
-              <Route path="/auth/register" element={<Register />} />
-              <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+    return (
+        <AuthProvider>
+            <TooltipProvider>
+                <div className="min-h-screen bg-gray-50">
+                    <OfflineNotification />
+                    <Routes>
+                        {/* Rotas públicas */}
+                        <Route path="/" element={<Home />} />
+                        <Route path="/home" element={<Home />} />
+                        <Route path="/search" element={<AdvancedSearch />} />
+                        <Route path="/advanced-search" element={<AdvancedSearch />} />
+                        
+                        {/* Rotas de autenticação */}
+                        <Route path="/auth/login" element={<Login />} />
+                        <Route path="/auth/register" element={<Register />} />
+                        <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
-              {/* Rotas de perfil unificadas */}\
-              <Route path="/professional/profile/:id" element={<UserProfile />} />
-              <Route path="/client/profile/:id" element={<ProtectedRoute requiredRoles={['contratante']}><ClientProfile /></ProtectedRoute>} />
+                        {/* Rotas de perfil unificadas */}\
+                        <Route path="/professional/profile/:id" element={<UserProfile />} />
+                        <Route path="/client/profile/:id" element={<ProtectedRoute requiredRoles={['contratante']}><ClientProfile /></ProtectedRoute>} />
 
-              {/* Rotas protegidas - Client */}
-              <Route 
-                path="/profile" 
-                element={
-                  <ProtectedRoute>
-                    <ProfileRedirect />
-                  </ProtectedRoute>
-                }
-              />
-              <Route 
-                path="/client/dashboard" 
-                element={
-                  <ProtectedRoute requiredRoles={['contratante']}>
-                    <ClientDashboard />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Rotas protegidas - Admin */}
-              <Route 
-                path="/admin/dashboard" 
-                element={
-                  <ProtectedRoute requiredRoles={['admin']}>
-                    <div>Admin Dashboard</div>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Rotas protegidas - Establishment */}
-              <Route 
-                path="/establishment/dashboard" 
-                element={
-                  <ProtectedRoute requiredRoles={['admin']}>
-                    <div>Establishment Dashboard</div>
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Rotas protegidas - Gerais (qualquer usuário autenticado) */}
-              <Route 
-                path="/chat" 
-                element={
-                  <ProtectedRoute>
-                    <Chat />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/auctions" 
-                element={<AuctionServices />} 
-              />
-              <Route 
-                path="/leilao" 
-                element={<AuctionServices />} 
-              />
-              
-              {/* Rotas de desenvolvimento/placeholder protegidas */}
-              <Route 
-                path="/dashboard" 
-                element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/settings" 
-                element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/preferences" 
-                element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/documents" 
-                element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/reviews" 
-                element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/history" 
-                element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                } 
-              />
-              <Route 
-                path="/social/*" 
-                element={
-                  <ProtectedRoute>
-                    <Home />
-                  </ProtectedRoute>
-                } 
-              />
-              
-              {/* Rotas de fallback */}
-              <Route path="/back" element={<Navigate to="/" replace />} />
-              <Route path="/menu" element={<Navigate to="/" replace />} />
-              
-              {/* Rota 404 - redireciona para home */}
-              <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          <PWAUpdatePrompt />
-          <Toaster />
-        </div>
-      </TooltipProvider>
-    </AuthProvider>
-  );
+                        {/* Rotas protegidas - Client */}
+                        <Route 
+                            path="/profile" 
+                            element={
+                                <ProtectedRoute>
+                                    <ProfileRedirect />
+                                </ProtectedRoute>
+                            }
+                        />
+                        <Route 
+                            path="/client/dashboard" 
+                            element={
+                                <ProtectedRoute requiredRoles={['contratante']}>
+                                    <ClientDashboard />
+                                </ProtectedRoute>
+                            } 
+                        />
+                        
+                        {/* Rotas protegidas - Admin */}
+                        <Route 
+                            path="/admin/dashboard" 
+                            element={
+                                <ProtectedRoute requiredRoles={['admin']}>
+                                    <div>Admin Dashboard</div>
+                                </ProtectedRoute>
+                            } 
+                        />
+                        
+                        {/* Rotas protegidas - Establishment */}
+                        <Route 
+                            path="/establishment/dashboard" 
+                            element={
+                                <ProtectedRoute requiredRoles={['admin']}>
+                                    <div>Establishment Dashboard</div>
+                                </ProtectedRoute>
+                            } 
+                        />
+                        
+                        {/* Rotas protegidas - Gerais (qualquer usuário autenticado) */}
+                        <Route 
+                            path="/chat" 
+                            element={
+                                <ProtectedRoute>
+                                    <Chat />
+                                </ProtectedRoute>
+                            } 
+                        />
+                        <Route 
+                            path="/auctions" 
+                            element={<AuctionServices />} 
+                        />
+                        <Route 
+                            path="/leilao" 
+                            element={<AuctionServices />} 
+                        />
+                        
+                        {/* Rotas de desenvolvimento/placeholder protegidas */}
+                        <Route 
+                            path="/dashboard" 
+                            element={
+                                <ProtectedRoute>
+                                    <Home />
+                                </ProtectedRoute>
+                            } 
+                        />
+                        <Route 
+                            path="/settings" 
+                            element={
+                                <ProtectedRoute>
+                                    <Home />
+                                </ProtectedRoute>
+                            } 
+                        />
+                        <Route 
+                            path="/preferences" 
+                            element={
+                                <ProtectedRoute>
+                                    <Home />
+                                </ProtectedRoute>
+                            } 
+                        />
+                        <Route 
+                            path="/documents" 
+                            element={
+                                <ProtectedRoute>
+                                    <Home />
+                                </ProtectedRoute>
+                            } 
+                        />
+                        <Route 
+                            path="/reviews" 
+                            element={
+                                <ProtectedRoute>
+                                    <Home />
+                                </ProtectedRoute>
+                            } 
+                        />
+                        <Route 
+                            path="/history" 
+                            element={
+                                <ProtectedRoute>
+                                    <Home />
+                                </ProtectedRoute>
+                            } 
+                        />
+                        <Route 
+                            path="/social/*" 
+                            element={
+                                <ProtectedRoute>
+                                    <Home />
+                                </ProtectedRoute>
+                            } 
+                        />
+                        
+                        {/* Rotas de fallback */}
+                        <Route path="/back" element={<Navigate to="/" replace />} />
+                        <Route path="/menu" element={<Navigate to="/" replace />} />
+                        
+                        {/* Rota 404 - redireciona para home */}
+                        <Route path="*" element={<Navigate to="/" replace />} />
+                    </Routes>
+                    <PWAUpdatePrompt />
+                    <Toaster />
+                </div>
+            </TooltipProvider>
+        </AuthProvider>
+    );
 };
 
 export default App;

@@ -1,4 +1,4 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext, useMemo, useCallback } from 'react';
 import type { User, Session, AuthError } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import type { Profile, Contratante } from '../types';
@@ -31,6 +31,48 @@ export const useAuth = () => {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+ const fetchUserProfile = useCallback(async (user: User) => {
+    setLoading(true);
+    try {
+      const { data: baseProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (profileError || !baseProfile) {
+        throw new Error(profileError?.message || 'Perfil base não encontrado.');
+      }
+
+      const role = baseProfile.role;
+      
+      // Apenas busca o perfil de contratante, ignorando outros roles
+      if (role === 'contratante') {
+        const { data, error } = await supabase
+          .from('contratantes')
+          .select('*')
+          .eq('id', baseProfile.id)
+          .single();
+
+        if (error) {
+          throw new Error(error.message);
+        }
+        const fullProfile = { ...baseProfile, ...data };
+        setProfile(fullProfile as UserProfile);
+      } else {
+        console.warn(`Usuário com a role '${role}' logado. O aplicativo está configurado apenas para o perfil de contratante.`);
+        setProfile(null);
+      }
+    } catch (err) {
+      console.error('Erro ao buscar perfil do usuário:', err);
+      setError(err instanceof Error ? err.message : 'Erro ao carregar perfil');
+      setProfile(null);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
 
   useEffect(() => {
     const getInitialSession = async () => {
@@ -70,50 +112,9 @@ export const useAuth = () => {
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [fetchUserProfile]);
 
-  const fetchUserProfile = async (user: User) => {
-    setLoading(true);
-    try {
-      const { data: baseProfile, error: profileError } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-
-      if (profileError || !baseProfile) {
-        throw new Error(profileError?.message || 'Perfil base não encontrado.');
-      }
-
-      const role = baseProfile.role;
-      
-      // Apenas busca o perfil de contratante, ignorando outros roles
-      if (role === 'contratante') {
-        const { data, error } = await supabase
-          .from('contratantes')
-          .select('*')
-          .eq('id', baseProfile.id)
-          .single();
-
-        if (error) {
-          throw new Error(error.message);
-        }
-        const fullProfile = { ...baseProfile, ...data };
-        setProfile(fullProfile as UserProfile);
-      } else {
-        console.warn(`Usuário com a role '${role}' logado. O aplicativo está configurado apenas para o perfil de contratante.`);
-        setProfile(null);
-      }
-    } catch (err) {
-      console.error('Erro ao buscar perfil do usuário:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao carregar perfil');
-      setProfile(null);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signUp = async (email: string, password: string, profileData: Partial<UserProfile>) => {
+ const signUp = useCallback(async (email: string, password: string, profileData: Partial<UserProfile>) => {
     try {
       setLoading(true);
       setError(null);
@@ -162,9 +163,9 @@ export const useAuth = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchUserProfile]);
 
-  const signIn = async (email: string, password: string) => {
+ const signIn = useCallback(async (email: string, password: string) => {
     try {
       setLoading(true);
       setError(null);
@@ -194,9 +195,9 @@ export const useAuth = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchUserProfile]);
 
-  const signOut = async () => {
+ const signOut = useCallback(async () => {
     try {
       setLoading(true);
       const { error } = await supabase.auth.signOut();
@@ -208,9 +209,9 @@ export const useAuth = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const updateProfile = async (updates: Partial<UserProfile>) => {
+ const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
     try {
       setLoading(true);
       setError(null);
@@ -250,9 +251,9 @@ export const useAuth = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [user, profile, fetchUserProfile]);
 
-  const resetPassword = async (email: string) => {
+ const resetPassword = useCallback(async (email: string) => {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/auth/reset-password`
@@ -262,9 +263,9 @@ export const useAuth = () => {
       const error = err as AuthError;
       return { error };
     }
-  };
+  }, []);
 
-  return {
+ return useMemo(() => ({
     user,
     profile,
     session,
@@ -275,7 +276,7 @@ export const useAuth = () => {
     signOut,
     updateProfile,
     resetPassword
-  };
+  }), [user, profile, session, loading, error, signUp, signIn, signOut, updateProfile, resetPassword]);
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
