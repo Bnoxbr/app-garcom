@@ -2,12 +2,10 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuctions } from '@/hooks/useAuctions';
 import { useCategories } from '@/hooks/useCategories';
-import { useAuthContext } from '@/hooks/useAuth';
 
 const CreateAuction: React.FC = () => {
     const { createAuction, loading } = useAuctions();
     const { categories, loading: loadingCategories, error: errorCategories } = useCategories();
-    const { user } = useAuthContext();
     const navigate = useNavigate();
     const [error, setError] = useState<string | null>(null);
 
@@ -30,9 +28,9 @@ const CreateAuction: React.FC = () => {
             const newAuction = await createAuction({
                 title,
                 description,
-                category_id: String(categoryId),
+                category_id: categoryId,
                 end_date: endDate,
-                base_price: basePrice as number,
+                base_price: Number(basePrice),
             });
             console.log("Leilão criado:", newAuction);
             navigate(`/auctions`);
@@ -89,7 +87,7 @@ const CreateAuction: React.FC = () => {
                             <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-1">Categoria</label>
                             <select
                                 id="category"
-                                value={category || ''}
+                                value={categoryId || ''}
                                 onChange={(e) => setCategoryId(e.target.value)}
                                 className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white"
                                 required
