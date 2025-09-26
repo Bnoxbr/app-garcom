@@ -59,50 +59,43 @@ O objetivo do módulo de leilão é criar um ambiente justo e eficiente onde **C
     - Um canal de comunicação (chat?) é aberto entre o contratante e o profissional vencedor.
     - O pagamento é processado (integração com o sistema de pagamentos).
 
-## 4. Proposta de Arquitetura Técnica
+## 4. Arquitetura Técnica Implementada
+
+A arquitetura foi simplificada para acelerar o desenvolvimento e manter a segurança, centralizando a lógica de negócios no frontend e delegando a segurança de dados para as Políticas de Segurança em Nível de Linha (RLS) do Supabase.
 
 ### 4.1. Banco de Dados (Supabase)
 
+A estrutura das tabelas permanece a mesma, servindo como a base para os dados de leilões e lances.
+
+- **Tabela `auctions`:** Armazena todos os leilões criados.
+- **Tabela `bids`:** Armazena todos os lances feitos nos leilões.
+
+### 4.2. Lógica de Negócios (Frontend)
+
+Toda a lógica de interação com o Supabase foi consolidada no hook `useAuctions.ts`. A abordagem inicial de usar uma Edge Function (Deno) para a lógica de `acceptBid` foi descartada em favor de uma chamada direta do cliente, protegida por RLS.
+
+- **Hook `useAuctions.ts`:**
+  - `createAuction(auctionData)`: Cria um novo leilão.
+  - `getAuctionById(id)`: Busca um leilão específico.
+  - `getAuctionBids(auctionId)`: Busca os lances de um leilão.
+  - `placeBid(bidData)`: Permite que um profissional faça um lance.
+  - `acceptBid(bidId)`: Lógica para o criador do leilão aceitar um lance. Esta função agora executa uma atualização na tabela `auctions` diretamente do frontend, definindo o `winner_id` e o `winning_bid_id`, e mudando o status do leilão para `CLOSED`.
+
+### 4.3. Segurança (Supabase RLS)
+
+A segurança é o pilar desta arquitetura. As seguintes políticas foram implementadas para garantir que os dados só possam ser acessados e modificados pelas pessoas certas:
+
 - **Tabela `auctions`:**
-  - `id` (uuid, pk)
-  - `created_at` (timestamp)
-  - `title` (text)
-  - `description` (text)
-  - `category_id` (fk -> `categories`)
-  - `client_id` (fk -> `profiles` ou `users`)
-  - `status` (enum: `OPEN`, `CLOSED`, `CANCELLED`)
-  - `deadline_bids` (timestamp)
-  - `deadline_service` (timestamp)
-  - `winner_id` (fk -> `profiles` ou `users`, nullable)
-  - `winning_bid_id` (fk -> `bids`, nullable)
+  - **Leitura:** Todos podem ver os leilões (`SELECT`).
+  - **Criação:** Apenas usuários autenticados podem criar leilões (`INSERT`).
+  - **Atualização:** Apenas o criador do leilão pode atualizá-lo (`UPDATE`). Isso é crucial para a função `acceptBid`, garantindo que apenas o "dono" do leilão possa aceitar uma oferta.
+  - **Deleção:** Ninguém pode deletar um leilão (regra implícita, sem política de `DELETE`).
 
 - **Tabela `bids`:**
-  - `id` (uuid, pk)
-  - `created_at` (timestamp)
-  - `auction_id` (fk -> `auctions`)
-  - `professional_id` (fk -> `profiles` ou `users`)
-  - `amount` (numeric)
-  - `proposal_message` (text)
-  - `estimated_deadline` (timestamp)
-  - `status` (enum: `ACTIVE`, `ACCEPTED`, `DECLINED`, `CANCELLED`)
-
-### 4.2. Frontend
-
-- **Novas Páginas:**
-  - `CreateAuctionPage.tsx`
-  - `AuctionListPage.tsx`
-  - `AuctionDetailsPage.tsx`
-- **Novos Componentes:**
-  - `AuctionForm`
-  - `AuctionCard`
-  - `BidList`
-  - `BidForm`
-- **Atualizações no Hook `useAuctions.ts`:**
-  - `createAuction(auctionData)`
-  - `getAuctionById(id)`
-  - `getBidsForAuction(auctionId)`
-  - `placeBid(bidData)`
-  - `acceptBid(bidId)`
+  - **Leitura:** Todos podem ver os lances de um leilão (`SELECT`).
+  - **Criação:** Apenas usuários autenticados podem fazer lances (`INSERT`).
+  - **Atualização:** Ninguém pode atualizar um lance depois de criado (`UPDATE` bloqueado). Isso garante a integridade das ofertas.
+  - **Deleção:** Ninguém pode deletar um lance (regra implícita, sem política de `DELETE`).
 
 ## 5. Disclaimers e Termos de Responsabilidade
 

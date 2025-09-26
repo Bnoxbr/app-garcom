@@ -106,12 +106,12 @@ const ClientProfile: React.FC = () => {
         
         // Mapeamento dos campos de estado de volta para o DB
         const updates: Partial<Contratante> = {
+            id: user.id,
             nome_fantasia: nomeFantasia,
             endereco: endereco,
             document: document,
             document_type: documentType,
             telefone: telefone,
-            description: descriptionEdit,
         };
         
         try {

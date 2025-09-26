@@ -1,50 +1,42 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuctions } from '@/hooks/useAuctions';
+import { useCategories } from '@/hooks/useCategories';
 
 const CreateAuction: React.FC = () => {
+    const { createAuction, loading } = useAuctions();
+    const { categories, loading: loadingCategories, error: errorCategories } = useCategories();
     const navigate = useNavigate();
-    const { createAuction } = useAuctions(); // Hook para criar o leilão
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [categoryId, setCategoryId] = useState<number | null>(null);
-    const [endDate, setEndDate] = useState('');
     const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false);
+
+    const [title, setTitle] = useState("");
+    const [description, setDescription] = useState("");
+    const [categoryId, setCategoryId] = useState<number | "">("");
+    const [endDate, setEndDate] = useState("");
+    const [basePrice, setBasePrice] = useState<number | "">("");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setLoading(true);
         setError(null);
 
-        // Validação simples
-        if (!title || !description || !categoryId || !endDate) {
-            setError('Por favor, preencha todos os campos obrigatórios.');
-            setLoading(false);
+        if (!title || !description || !categoryId || !endDate || !basePrice) {
+            setError("Por favor, preencha todos os campos obrigatórios.");
             return;
         }
 
         try {
-            const { error: createError } = await createAuction({
+            const newAuction = await createAuction({
                 title,
                 description,
                 category_id: String(categoryId),
                 end_date: endDate,
+                base_price: basePrice as number,
             });
-
-            if (createError) {
-                throw createError;
-            }
-
-            // Sucesso!
-            alert('Leilão criado com sucesso!');
-            navigate('/auctions'); // Redireciona para a lista de leilões
-
+            console.log("Leilão criado:", newAuction);
+            navigate(`/auctions`);
         } catch (err: any) {
             setError(err.message || 'Ocorreu um erro ao criar o leilão. Tente novamente.');
             console.error(err);
-        } finally {
-            setLoading(false);
         }
     };
 
@@ -99,13 +91,18 @@ const CreateAuction: React.FC = () => {
                                 onChange={(e) => setCategoryId(Number(e.target.value))}
                                 className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white"
                                 required
+                                disabled={loadingCategories}
                             >
-                                <option value="" disabled>Selecione uma categoria</option>
-                                {/* Mock de categorias - será substituído por dados reais */}
-                                <option value={1}>Garçom</option>
-                                <option value={2}>Cozinheiro</option>
-                                <option value={3}>Barman</option>
+                                <option value="" disabled>
+                                    {loadingCategories ? 'Carregando...' : 'Selecione uma categoria'}
+                                </option>
+                                {categories.map((category) => (
+                                    <option key={category.id} value={category.id}>
+                                        {category.name}
+                                    </option>
+                                ))}
                             </select>
+                            {errorCategories && <p className="text-red-500 text-sm mt-1">{errorCategories}</p>}
                         </div>
                         <div>
                             <label htmlFor="end-date" className="block text-sm font-medium text-gray-700 mb-1">Data Limite para Lances</label>
@@ -118,6 +115,20 @@ const CreateAuction: React.FC = () => {
                                 required
                             />
                         </div>
+                    </div>
+
+                    {/* Preço Base */}
+                    <div>
+                        <label htmlFor="basePrice" className="block text-sm font-medium text-gray-700 mb-1">Preço Mínimo (R$)</label>
+                        <input
+                            type="number"
+                            id="basePrice"
+                            value={basePrice}
+                            onChange={(e) => setBasePrice(Number(e.target.value))}
+                            placeholder="Ex: 150,00"
+                            className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                            required
+                        />
                     </div>
 
                     {/* Mensagem de Erro */}

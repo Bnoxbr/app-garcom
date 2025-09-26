@@ -4,6 +4,8 @@ import { useAuctions } from '../../hooks/useAuctions';
 import { useAuthContext } from '../../hooks/useAuth'; 
 import type { Auction, AuctionBid } from '../../types/auction';
 import { formatCurrency, formatDate } from '../../lib/utils';
+import { toast } from 'sonner';
+import { supabase } from '../../lib/supabase';
 
 const AuctionDetails = () => {
     const { id } = useParams<{ id: string }>();
@@ -43,19 +45,59 @@ const AuctionDetails = () => {
                 }
             };
             fetchAuctionDetails();
+
+            const channel = supabase
+                .channel(`bids-for-auction-${id}`)
+                .on(
+                    'postgres_changes',
+                    { event: 'INSERT', schema: 'public', table: 'bids', filter: `auction_id=eq.${id}` },
+                    (payload) => {
+                        // Precisamos buscar os dados do licitante (bidder)
+                        const fetchBidder = async (bidderId: string) => {
+                            const { data: bidderData } = await supabase
+                                .from('profiles')
+                                .select('id, full_name')
+                                .eq('id', bidderId)
+                                .single();
+                            return bidderData;
+                        };
+
+                        const newBid = payload.new as AuctionBid;
+
+                        fetchBidder(newBid.bidder_id).then((bidder) => {
+                            const bidWithProfessional = { ...newBid, professional: bidder || undefined };
+                            setBids((prevBids) => [bidWithProfessional, ...prevBids]);
+                        });
+                    }
+                )
+                .subscribe();
+
+            return () => {
+                supabase.removeChannel(channel);
+            };
         }
     }, [id, getAuctionById, getAuctionBids]);
 
     const handleAcceptBid = async (bidId: string) => {
-        if (window.confirm('Tem certeza que deseja aceitar este lance? Esta ação não pode ser desfeita.')) {
-            const { error } = await acceptBid(bidId);
-            if (error) {
-                alert(`Erro ao aceitar o lance: ${error.message}`);
-            } else {
-                alert('Lance aceito com sucesso! O leilão foi encerrado.');
-                navigate('/my-auctions'); // Redireciona para a lista de leilões do usuário
-            }
-        }
+        toast("Tem certeza que deseja aceitar este lance?", {
+            description: "Esta ação não pode ser desfeita.",
+            action: {
+                label: "Confirmar",
+                onClick: async () => {
+                    const { error } = await acceptBid(bidId);
+                    if (error) {
+                        toast.error(`Erro ao aceitar o lance: ${error.message}`);
+                    } else {
+                        toast.success('Lance aceito com sucesso! O leilão foi encerrado.');
+                        navigate('/auctions/my'); // Redireciona para a lista de leilões do usuário
+                    }
+                },
+            },
+            cancel: {
+                label: "Cancelar",
+                onClick: () => {},
+            },
+        });
     };
 
     if (loading) {

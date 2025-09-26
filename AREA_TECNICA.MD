@@ -662,3 +662,9 @@ Para cada frontend, há um arquivo `info.md` que serve como um template para col
 - O código foi desenvolvido com foco em componentes reutilizáveis.
 - A estrutura do projeto segue as melhores práticas de organização de pastas e arquivos em projetos React.
 - É necessário implementar testes unitários e de integração.
+
+## Documentação de Módulos Específicos
+
+Para documentação detalhada sobre módulos específicos, consulte os seguintes arquivos:
+
+- **Módulo de Leilões:** [Documentação do Módulo de Leilão](./leilao_documentation.md)
