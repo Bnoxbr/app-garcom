@@ -394,7 +394,7 @@ const AuctionsPage: React.FC = () => {
                             {formatCurrency(bid.bid_amount)}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {formatTimeRemaining(bid.created_at)}
+                            {bid.created_at && formatTimeRemaining(bid.created_at)}
                           </p>
                         </div>
                       </div>
