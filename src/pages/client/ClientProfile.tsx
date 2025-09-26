@@ -292,11 +292,51 @@ const ClientProfile: React.FC = () => {
                         </div>
                     )}
 
-                    {/* Fotos Tab / Gestão Tab ... (O restante é mock e placeholder) */}
+                    {/* Fotos Tab */}
+                    {activeTab === "fotos" && (
+                        <div className="grid grid-cols-3 gap-2">
+                            {mockPhotos.map((photo, index) => (
+                                <div key={index} className="w-full h-24 bg-gray-200 rounded-lg overflow-hidden">
+                                    <img src={photo} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
+                                </div>
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Gestão Tab */}
+                    {activeTab === "gestao" && (
+                        <div className="space-y-6">
+                            {/* Seção de Leilões */}
+                            <div className="bg-white rounded-lg shadow-sm p-4">
+                                <h3 className="font-semibold text-lg mb-4">Meus Leilões</h3>
+                                <div className="flex flex-col sm:flex-row gap-4">
+                                    <button 
+                                        onClick={() => navigate('/auctions/new')}
+                                        className="flex-1 text-center px-4 py-3 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-colors duration-200"
+                                    >
+                                        <i className="fas fa-plus-circle mr-2"></i>
+                                        Criar Novo Leilão
+                                    </button>
+                                    <button 
+                                        onClick={() => navigate('/auctions')}
+                                        className="flex-1 text-center px-4 py-3 bg-gray-600 text-white rounded-lg shadow-sm hover:bg-gray-700 transition-colors duration-200"
+                                    >
+                                        <i className="fas fa-gavel mr-2"></i>
+                                        Ver Meus Leilões
+                                    </button>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-3">
+                                    Crie um novo leilão para receber propostas de profissionais ou gerencie seus leilões existentes.
+                                </p>
+                            </div>
+
+                            {/* Outras opções de gestão podem vir aqui */}
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Tab Bar FIXA INFERIOR (Rodapé) - Manter o componente DashboardNavigation */}
+            {/* Bottom Navigation Bar (se houver) */}
         </div>
     );
 };

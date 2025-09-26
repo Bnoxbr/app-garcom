@@ -40,7 +40,6 @@ export default defineConfig({
     }
   },
   
-  // CORREÇÃO: Plugin sempre carregado para injetar módulos virtuais
   plugins: [
     react(),
     VitePWA({
@@ -56,9 +55,7 @@ export default defineConfig({
       strategies: 'generateSW',
       injectRegister: 'auto',
       
-      // SOLUÇÃO PARA O CONFLITO: Desativar o Service Worker em desenvolvimento
       devOptions: {
-        // Se estiver em desenvolvimento, não force o service worker
         enabled: false,
         type: 'module',
         navigateFallback: 'index.html',

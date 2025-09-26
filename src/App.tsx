@@ -1,23 +1,25 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { AuthProvider, useAuthContext } from './hooks/useAuth';
-import { ProtectedRoute, PWAUpdatePrompt, OfflineNotification } from './components';
-import { TooltipProvider } from './components/ui/tooltip';
-import ClientProfile from './pages/client/ClientProfile';
-import ClientDashboard from './pages/client/ClientDashboard';
-import UserProfile from './pages/profile/UserProfile';
-import Chat from './pages/shared/Chat';
-import AdvancedSearch from './pages/shared/AdvancedSearch';
-import AuctionServices from './pages/shared/AuctionServices';
+import { AuthProvider, useAuthContext } from '@/hooks/useAuth';
+import { ProtectedRoute, PWAUpdatePrompt, OfflineNotification } from '@/components';
+import { TooltipProvider } from '@/components/ui/tooltip';
+import ClientDashboard from '@/pages/client/ClientDashboard';
+import UserProfile from '@/pages/profile/UserProfile';
+import ClientProfile from '@/pages/client/ClientProfile';
+import CreateAuction from '@/pages/auctions/CreateAuction';
+import MyAuctions from '@/pages/auctions/MyAuctions'; // Importa a nova página
+import Chat from '@/pages/shared/Chat';
+import AdvancedSearch from '@/pages/shared/AdvancedSearch';
+import AuctionServices from '@/pages/shared/AuctionServices';
 
 // Importar a página principal (Home)
-import Home from './pages/Home';
+import Home from '@/pages/Home';
 
 // Importar páginas de autenticação
-import Login from './pages/auth/Login';
-import { Register } from './pages/auth/Register';
-import ForgotPassword from './pages/auth/ForgotPassword';
+import Login from '@/pages/auth/Login';
+import { Register } from '@/pages/auth/Register';
+import ForgotPassword from '@/pages/auth/ForgotPassword';
 
 // Componente para redirecionar baseado no role do usuário
 const ProfileRedirect: React.FC = () => {
@@ -30,7 +32,7 @@ const ProfileRedirect: React.FC = () => {
     // Mapeamento de redirecionamento para cada papel
     const roleRedirects: { [key: string]: string } = {
         contratante: `/client/profile/${profile.id}`,
-        profissional: `/professional/profile/${profile.id}`, // CORREÇÃO: Adicionado redirecionamento para profissionais
+        // profissional: `/professional/profile/${profile.id}`, // Rota removida temporariamente
         admin: '/admin/dashboard',
         // Adicione outros papéis aqui se necessário
     };
@@ -62,7 +64,7 @@ const App: React.FC = () => {
                         <Route path="/auth/register" element={<Register />} />
                         <Route path="/auth/forgot-password" element={<ForgotPassword />} />
 
-                        {/* Rotas de perfil unificadas */}\
+                        {/* Rotas de perfil unificadas */}
                         <Route path="/professional/profile/:id" element={<UserProfile />} />
                         <Route path="/client/profile/:id" element={<ProtectedRoute requiredRoles={['contratante']}><ClientProfile /></ProtectedRoute>} />
 
