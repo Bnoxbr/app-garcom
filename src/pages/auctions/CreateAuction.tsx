@@ -11,7 +11,7 @@ const CreateAuction: React.FC = () => {
 
     const [title, setTitle] = useState("");
     const [description, setDescription] = useState("");
-    const [categoryId, setCategoryId] = useState<number | "">("");
+    const [categoryId, setCategoryId] = useState<string>("");
     const [endDate, setEndDate] = useState("");
     const [basePrice, setBasePrice] = useState<number | "">("");
 
@@ -28,9 +28,9 @@ const CreateAuction: React.FC = () => {
             const newAuction = await createAuction({
                 title,
                 description,
-                category_id: String(categoryId),
+                category_id: categoryId,
                 end_date: endDate,
-                base_price: basePrice as number,
+                base_price: Number(basePrice),
             });
             console.log("Leilão criado:", newAuction);
             navigate(`/auctions`);
@@ -88,7 +88,7 @@ const CreateAuction: React.FC = () => {
                             <select
                                 id="category"
                                 value={categoryId || ''}
-                                onChange={(e) => setCategoryId(Number(e.target.value))}
+                                onChange={(e) => setCategoryId(e.target.value)}
                                 className="w-full p-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 bg-white"
                                 required
                                 disabled={loadingCategories}

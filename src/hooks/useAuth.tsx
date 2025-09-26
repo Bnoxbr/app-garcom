@@ -218,15 +218,22 @@ export const useAuth = () => {
       if (!user || !profile) {
         throw new Error("Usuário não autenticado.");
       }
-      const baseProfileUpdates: Partial<Profile> = {};
-      const specificProfileUpdates: Partial<Contratante> = {};
-      Object.keys(updates).forEach(key => {
-        if (['full_name', 'avatar_url'].includes(key)) {
-          (baseProfileUpdates as any)[key] = (updates as any)[key];
-        } else {
-          (specificProfileUpdates as any)[key] = (updates as any)[key];
-        }
-      });
+
+      const baseProfileUpdates: Partial<Profile> = {};
+      const specificProfileUpdates: Partial<Contratante> = {};
+
+      // Separa os campos para cada tabela
+      for (const key in updates) {
+        if (Object.prototype.hasOwnProperty.call(updates, key)) {
+          const value = (updates as any)[key];
+          if (key === 'full_name' || key === 'avatar_url' || key === 'username' || key === 'website') {
+            (baseProfileUpdates as any)[key] = value;
+          } else {
+            (specificProfileUpdates as any)[key] = value;
+          }
+        }
+      }
+
       if (Object.keys(baseProfileUpdates).length > 0) {
         const { error: profileError } = await supabase
           .from('profiles')
@@ -236,9 +243,9 @@ export const useAuth = () => {
       }
       if (Object.keys(specificProfileUpdates).length > 0) {
         const { error: specificProfileError } = await supabase
-          .from('contratantes') // Corrigido para buscar sempre a tabela `contratantes`
+          .from('contratantes') 
           .update(specificProfileUpdates)
-          .eq('id', user.id); // Corrigido para usar o 'id' do usuário
+          .eq('id', user.id);
         if (specificProfileError) throw specificProfileError;
       }
       await fetchUserProfile(user);
