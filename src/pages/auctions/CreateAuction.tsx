@@ -1,11 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuthContext } from '../../hooks/useAuth';
-import { useAuctions } from '../../hooks/useAuctions';
+import { useAuctions } from '@/hooks/useAuctions';
 
 const CreateAuction: React.FC = () => {
     const navigate = useNavigate();
-    const { user } = useAuthContext();
     const { createAuction } = useAuctions(); // Hook para criar o leilão
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
@@ -20,7 +18,7 @@ const CreateAuction: React.FC = () => {
         setError(null);
 
         // Validação simples
-        if (!title || !description || !category || !endDate) {
+        if (!title || !description || !categoryId || !endDate) {
             setError('Por favor, preencha todos os campos obrigatórios.');
             setLoading(false);
             return;
@@ -30,7 +28,7 @@ const CreateAuction: React.FC = () => {
             const { error: createError } = await createAuction({
                 title,
                 description,
-                category_id: parseInt(category, 10),
+                category_id: String(categoryId),
                 end_date: endDate,
             });
 

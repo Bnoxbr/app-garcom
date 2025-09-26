@@ -279,8 +279,8 @@ const AuctionsPage: React.FC = () => {
                         <p className="text-sm text-gray-600">{auction.description}</p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-500">Criado {formatTimeRemaining(auction.created_at)}</p>
-                        <p className="text-xs text-gray-500">Termina {formatTimeRemaining(auction.end_date || auction.end_time)}</p>
+                        <p className="text-xs text-gray-500">Criado {auction.created_at ? formatTimeRemaining(auction.created_at) : ''}</p>
+                        <p className="text-xs text-gray-500">Termina {formatTimeRemaining(auction.end_date)}</p>
                       </div>
                     </div>
 
@@ -290,7 +290,7 @@ const AuctionsPage: React.FC = () => {
                         <p className="text-sm">Lance atual: <span className="font-semibold text-green-600">{formatCurrency(currentBidValue)}</span></p>
                       </div>
                       <div className="text-right">
-                        <p className="text-xs text-gray-600">{auction.bids_count || 0} lances</p>
+                        <p className="text-xs text-gray-600">{auction.bids?.length ?? 0} lances</p>
                       </div>
                     </div>
 
@@ -298,15 +298,15 @@ const AuctionsPage: React.FC = () => {
                       <div className="flex items-center">
                         <div className="w-8 h-8 bg-gray-200 rounded-full overflow-hidden mr-2">
                           {auction.creator?.avatar_url ? (
-                            <img src={auction.creator.avatar_url} alt={auction.creator.name} className="w-full h-full object-cover" />
+                            <img src={auction.creator.avatar_url} alt={auction.creator.full_name || 'Avatar'} className="w-full h-full object-cover" />
                           ) : (
                             <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-500">
-                              {auction.creator?.name?.charAt(0) || "U"}
+                              {auction.creator?.full_name?.charAt(0) || "U"}
                             </div>
                           )}
                         </div>
                         <div>
-                          <p className="text-xs font-medium">{auction.creator?.name || "Usuário"}</p>
+                          <p className="text-xs font-medium">{auction.creator?.full_name || "Usuário"}</p>
                         </div>
                       </div>
                       <button
@@ -362,18 +362,18 @@ const AuctionsPage: React.FC = () => {
                         <div className="flex items-center">
                           <div className="w-6 h-6 bg-gray-200 rounded-full overflow-hidden mr-2">
                             {bid.professional?.avatar_url ? (
-                              <img src={bid.professional.avatar_url} alt={bid.professional.name} className="w-full h-full object-cover" />
+                              <img src={bid.professional.avatar_url} alt={bid.professional.full_name || 'Avatar'} className="w-full h-full object-cover" />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center bg-blue-100 text-blue-500">
-                                {bid.professional?.name?.charAt(0) || "U"}
+                                {bid.professional?.full_name?.charAt(0) || "U"}
                               </div>
                             )}
                           </div>
-                          <span className="text-xs">{bid.professional?.name || "Usuário"}</span>
+                          <span className="text-xs">{bid.professional?.full_name || "Usuário"}</span>
                         </div>
                         <div className="text-right">
                           <p className="text-xs font-medium">{formatCurrency(bid.bid_amount)}</p>
-                          <p className="text-xs text-gray-500">{formatTimeRemaining(bid.created_at)}</p>
+                          <p className="text-xs text-gray-500">{bid.created_at ? formatTimeRemaining(bid.created_at) : ''}</p>
                         </div>
                       </div>
                     ))}

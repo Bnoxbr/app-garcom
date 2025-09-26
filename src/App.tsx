@@ -85,6 +85,24 @@ const App: React.FC = () => {
                                 </ProtectedRoute>
                             } 
                         />
+
+                        {/* Rotas de Leilão */}
+                        <Route 
+                            path="/auctions/create" 
+                            element={
+                                <ProtectedRoute requiredRoles={['contratante']}>
+                                    <CreateAuction />
+                                </ProtectedRoute>
+                            } 
+                        />
+                        <Route 
+                            path="/auctions/my" 
+                            element={
+                                <ProtectedRoute requiredRoles={['contratante']}>
+                                    <MyAuctions />
+                                </ProtectedRoute>
+                            } 
+                        />
                         
                         {/* Rotas protegidas - Admin */}
                         <Route 

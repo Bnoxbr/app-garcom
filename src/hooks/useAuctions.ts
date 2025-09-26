@@ -1,299 +1,232 @@
-import { useState, useEffect } from 'react';
+import { useState, useCallback } from 'react'; // Importa useCallback e remove useEffect
 import { supabase } from '../lib/supabase';
-import type { Auction, AuctionBid } from '../types';
+import type { Auction, AuctionBid } from '../types/auction'; // Caminho corrigido
 import { useAuthContext } from './useAuth';
 
 interface UseAuctionsReturn {
-  auctions: Auction[];
-  activeAuctions: Auction[];
-  myAuctions: Auction[];
-  loading: boolean;
-  error: string | null;
-  refetch: () => Promise<void>;
-  createAuction: (auctionData: Partial<Auction>) => Promise<{ data: Auction | null; error: Error | null }>;
-  placeBid: (auctionId: string, bidAmount: number) => Promise<{ data: AuctionBid | null; error: Error | null }>;
-  getAuctionBids: (auctionId: string) => Promise<{ data: AuctionBid[] | null; error: Error | null }>;
-  getAuctionById: (auctionId: string) => Promise<{ data: Auction | null; error: Error | null }>;
-  getMyAuctions: () => Promise<{ data: Auction[] | null; error: Error | null }>; // Adiciona a nova função
-  updateAuction: (auctionId: string, updates: Partial<Auction>) => Promise<{ data: Auction | null; error: Error | null }>;
-  acceptBid: (bidId: string) => Promise<{ error: Error | null }>;
+    auctions: Auction[];
+    activeAuctions: Auction[];
+    myAuctions: Auction[];
+    loading: boolean;
+    error: string | null;
+    refetch: () => Promise<void>;
+    createAuction: (auctionData: Partial<Auction>) => Promise<{ data: Auction | null; error: Error | null }>;
+    placeBid: (auctionId: string, bidAmount: number) => Promise<{ data: AuctionBid | null; error: Error | null }>;
+    getAuctionBids: (auctionId: string) => Promise<{ data: AuctionBid[] | null; error: Error | null }>;
+    getAuctionById: (auctionId: string) => Promise<{ data: Auction | null; error: any }>; // Corrigido para 'any'
+    getMyAuctions: () => Promise<{ data: Auction[] | null; error: Error | null }>;
+    updateAuction: (auctionId: string, updates: Partial<Auction>) => Promise<{ data: Auction | null; error: Error | null }>;
+    acceptBid: (bidId: string) => Promise<{ error: Error | null }>;
 }
 
 export const useAuctions = (): UseAuctionsReturn => {
-  const [auctions, setAuctions] = useState<Auction[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
-  const { user, profile } = useAuthContext();
+    const [auctions, setAuctions] = useState<Auction[]>([]);
+    const [activeAuctions, setActiveAuctions] = useState<Auction[]>([]);
+    const [myAuctions, setMyAuctions] = useState<Auction[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+    const { user } = useAuthContext();
 
-  // Calcular taxa de serviço (10%)
-  const calculateServiceFee = (amount: number): number => {
-    return parseFloat((amount * 0.1).toFixed(2));
-  };
+    const fetchAuctions = useCallback(async () => {
+        try {
+            setLoading(true);
+            setError(null);
 
-  // Buscar todos os leilões
-  const fetchAuctions = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+            const { data, error: fetchError } = await supabase
+                .from('auctions')
+                .select('*, creator:profiles(*), category:categories(*)')
+                .order('created_at', { ascending: false });
 
-      const { data, error: fetchError } = await supabase
-        .from('auctions')
-        .select('*, creator:contratantes(*)')
-        .order('created_at', { ascending: false });
+            if (fetchError) {
+                throw fetchError;
+            }
 
-      if (fetchError) {
-        throw fetchError;
-      }
+            setAuctions(data || []);
+            
+            // Simplesmente para o exemplo, você pode querer lógicas diferentes
+            setActiveAuctions(data.filter(a => new Date(a.end_date) > new Date()) || []);
 
-      setAuctions(data || []);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao buscar leilões');
-      console.error('Erro ao buscar leilões:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // Buscar leilão por ID
-  const getAuctionById = async (auctionId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('auctions')
-        .select('*, creator:contratantes(*)')
-        .eq('id', auctionId)
-        .single();
-
-      return { data, error };
-    } catch (err: any) {
-      console.error('Erro ao buscar leilão:', err);
-      return { data: null, error: err };
-    }
-  };
-
-  // Buscar leilões do usuário logado
-  const getMyAuctions = async () => {
-    try {
-      if (!user) {
-        throw new Error('Usuário não autenticado para buscar seus leilões.');
-      }
-
-      const { data, error } = await supabase
-        .from('auctions')
-        .select('*, creator:contratantes(*)')
-        .eq('client_id', user.id)
-        .order('created_at', { ascending: false });
-
-      return { data, error };
-    } catch (err: any) {
-      console.error('Erro ao buscar meus leilões:', err);
-      return { data: null, error: err };
-    }
-  };
-
-  // Criar um novo leilão
-  const createAuction = async (auctionData: { title: string; description: string; category_id: number; end_date: string; }) => {
-    try {
-      if (!user) {
-        throw new Error('Usuário não autenticado para criar um leilão.');
-      }
-
-      const newAuction = {
-        client_id: user.id, // Chave estrangeira para o criador
-        title: auctionData.title,
-        description: auctionData.description,
-        category_id: auctionData.category_id,
-        end_date: auctionData.end_date,
-        status: 'open', // Status inicial
-      };
-
-      const { data, error } = await supabase
-        .from('auctions')
-        .insert(newAuction)
-        .select()
-        .single();
-
-      if (error) throw error;
-
-      // Opcional: re-buscar leilões ou adicionar o novo localmente
-      await fetchAuctions();
-
-      return { data, error: null };
-    } catch (err: any) {
-      console.error('Erro ao criar leilão:', err);
-      return { data: null, error: err };
-    }
-  };
-
-  // Fazer um lance em um leilão
-  const placeBid = async (auctionId: string, bidAmount: number) => {
-    try {
-      if (!user || !profile) {
-        throw new Error('Usuário não autenticado');
-      }
-
-      // Verificar se o profissional tem avaliação mínima (3.5)
-      if (profile.role === 'profissional') {
-        const { data: professionalData } = await supabase
-          .from('professionals')
-          .select('rating')
-          .eq('profile_id', profile.id)
-          .single();
-
-        if (!professionalData || professionalData.rating < 3.5) {
-          throw new Error('Apenas profissionais com avaliação mínima de 3.5 podem participar de leilões');
+        } catch (err: any) {
+            setError(err.message || 'Erro ao buscar leilões');
+            console.error('Erro ao buscar leilões:', err);
+        } finally {
+            setLoading(false);
         }
-      }
+    }, []);
 
-      // Calcular taxa de serviço
-      const serviceFee = calculateServiceFee(bidAmount);
-      const totalAmount = bidAmount + serviceFee;
+    const refetch = useCallback(async () => {
+        await fetchAuctions();
+    }, [fetchAuctions]);
 
-      const newBid = {
-        auction_id: auctionId,
-        bidder_id: profile.id,
-        amount: bidAmount,
-        service_fee: serviceFee,
-        total_amount: totalAmount,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      };
 
-      const { data, error } = await supabase
-        .from('auction_bids')
-        .insert([newBid])
-        .select()
-        .single();
+    // Buscar leilão por ID
+    const getAuctionById = useCallback(async (auctionId: string) => {
+        try {
+            const { data, error } = await supabase
+                .from('auctions')
+                .select('*, creator:profiles(*), category:categories(*)')
+                .eq('id', auctionId)
+                .single();
 
-      return { data, error };
-    } catch (err: any) {
-      console.error('Erro ao fazer lance:', err);
-      return { data: null, error: err };
-    }
-  };
+            return { data, error };
+        } catch (err: any) {
+            console.error('Erro ao buscar leilão:', err);
+            return { data: null, error: err };
+        }
+    }, []);
 
-  // Buscar lances de um leilão
-  const getAuctionBids = async (auctionId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('auction_bids')
-        .select('*, bidder:profissionais(*)')
-        .eq('auction_id', auctionId)
-        .order('amount', { ascending: true });
+    // Buscar leilões do usuário logado
+    const getMyAuctions = useCallback(async () => {
+        if (!user) return { data: null, error: new Error('Usuário não autenticado') };
 
-      return { data, error };
-    } catch (err: any) {
-      console.error('Erro ao buscar lances:', err);
-      return { data: null, error: err };
-    }
-  };
+        const { data, error } = await supabase
+            .from('auctions')
+            .select('*, creator:profiles(*), category:categories(*)')
+            .eq('creator_id', user.id);
 
-  // Aceitar um lance
-  const acceptBid = async (bidId: string) => {
-    try {
-      // Buscar informações do lance
-      const { data: bidData, error: bidError } = await supabase
-        .from('auction_bids')
-        .select('*, auction:auctions(*)')
-        .eq('id', bidId)
-        .single();
+        if (error) {
+            console.error('Erro ao buscar meus leilões:', error);
+            return { data: null, error };
+        }
+        
+        setMyAuctions(data || []);
+        return { data, error: null };
+    }, [user]);
 
-      if (bidError || !bidData) {
-        throw bidError || new Error('Lance não encontrado');
-      }
+    // Função para criar um novo leilão
+    const createAuction = useCallback(async (auctionData: Partial<Auction>) => {
+        if (!user) return { data: null, error: new Error('Usuário não autenticado') };
 
-      // Verificar se o usuário é o criador do leilão
-      if (profile?.role !== 'contratante' || (bidData.auction && bidData.auction.creator_id !== profile?.id)) {
-        throw new Error('Apenas o criador do leilão pode aceitar lances');
-      }
+        const newAuctionData = {
+            ...auctionData,
+            creator_id: user.id,
+            status: 'open', // Definindo um status padrão
+        };
 
-      // Atualizar o status do lance para 'accepted'
-      const { error: updateBidError } = await supabase
-        .from('auction_bids')
-        .update({ status: 'accepted' })
-        .eq('id', bidId);
+        const { data, error } = await supabase
+            .from('auctions')
+            .insert([newAuctionData])
+            .select()
+            .single();
 
-      if (updateBidError) {
-        throw updateBidError;
-      }
+        if (error) {
+            console.error("Erro ao criar leilão:", error);
+            return { data: null, error };
+        }
 
-      // Atualizar o status do leilão para 'completed'
-      const { error: updateAuctionError } = await supabase
-        .from('auctions')
-        .update({
-          status: 'completed',
-          winning_bid_id: bidId,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', bidData.auction_id);
+        await refetch();
+        return { data, error: null };
+    }, [user, refetch]);
 
-      if (updateAuctionError) {
-        throw updateAuctionError;
-      }
+    const placeBid = useCallback(async (auctionId: string, bidAmount: number) => {
+        if (!user) return { data: null, error: new Error('Usuário não autenticado') };
 
-      // 3. Criar um novo booking a partir dos dados do leilão e do lance
-      const { error: createBookingError } = await supabase.from('bookings').insert([
-        {
-          client_id: bidData.auction.creator_id,
-          provider_id: bidData.bidder_id,
-          service_type: bidData.auction.category_id || 'geral', // Usar category_id ou um valor padrão
-          event_date: bidData.auction.event_date,
-          duration_hours: bidData.auction.duration_hours,
-          hourly_rate: bidData.amount / (bidData.auction.duration_hours || 1), // Calcular valor por hora
-          total_amount: bidData.amount,
-          event_address: JSON.parse(bidData.auction.location || '{}'), // Converter string JSON para objeto
-          description: bidData.auction.description,
-          status: 'confirmed',
-          payment_status: 'unpaid',
-        },
-      ]);
+        const { data, error } = await supabase
+            .from('bids')
+            .insert([{
+                auction_id: auctionId,
+                bidder_id: user.id,
+                bid_amount: bidAmount
+            }])
+            .select()
+            .single();
 
-      if (createBookingError) {
-        // Idealmente, usar uma transação para reverter as alterações anteriores
-        console.error('Erro ao criar booking, idealmente reverteria a transação:', createBookingError);
-        throw createBookingError;
-      }
+        if (error) {
+            console.error("Erro ao fazer lance:", error);
+            return { data: null, error };
+        }
 
-      // Atualizar a lista de leilões
-      await fetchAuctions();
+        return { data, error: null };
+    }, [user]);
 
-      return { error: null };
-    } catch (err: any) {
-      console.error('Erro ao aceitar lance:', err);
-      return { error: err };
-    }
-  };
+    const getAuctionBids = useCallback(async (auctionId: string) => {
+        const { data, error } = await supabase
+            .from('bids')
+            .select('*, bidder:profiles(*)')
+            .eq('auction_id', auctionId)
+            .order('created_at', { ascending: false });
 
-  // Recarregar os leilões
-  const refetch = async () => {
-    await fetchAuctions();
-  };
+        if (error) {
+            console.error("Erro ao buscar lances:", error);
+            return { data: null, error };
+        }
 
-  // Carregar leilões ao montar o componente
-  useEffect(() => {
-    fetchAuctions();
-  }, []);
+        return { data, error: null };
+    }, []);
 
-  // Filtrar leilões ativos
-  const activeAuctions = auctions.filter(auction => auction.status === 'open');
+    const updateAuction = useCallback(async (auctionId: string, updates: Partial<Auction>) => {
+        const { data, error } = await supabase
+            .from('auctions')
+            .update(updates)
+            .eq('id', auctionId)
+            .select()
+            .single();
 
-  // Filtrar meus leilões (criados pelo usuário atual, se for contratante)
-  const myAuctions = profile?.role === 'contratante' 
-    ? auctions.filter(auction => auction.creator_id === profile?.id)
-    : [];
+        if (error) {
+            console.error("Erro ao atualizar leilão:", error);
+            return { data: null, error };
+        }
 
-  return {
-    auctions,
-    activeAuctions: auctions.filter(a => a.status === 'open'),
-    myAuctions: auctions.filter(a => a.client_id === user?.id),
-    loading,
-    error,
-    refetch,
-    createAuction,
-    placeBid,
-    getAuctionBids,
-    getAuctionById,
-    getMyAuctions, // Exporta a nova função
-    updateAuction,
-    acceptBid,
-  };
+        await refetch();
+        return { data, error: null };
+    }, [refetch]);
+
+    const acceptBid = useCallback(async (bidId: string) => {
+        // Esta é uma implementação de exemplo. A lógica real pode ser mais complexa.
+        // 1. Encontrar o lance
+        const { data: bid, error: bidError } = await supabase
+            .from('bids')
+            .select('*')
+            .eq('id', bidId)
+            .single();
+
+        if (bidError || !bid) {
+            console.error("Erro ao buscar o lance para aceitar:", bidError);
+            return { error: bidError || new Error("Lance não encontrado") };
+        }
+
+        // 2. Atualizar o status do leilão para 'closed'
+        const { error: auctionUpdateError } = await supabase
+            .from('auctions')
+            .update({ status: 'closed', winner_id: bid.bidder_id })
+            .eq('id', bid.auction_id);
+
+        if (auctionUpdateError) {
+            console.error("Erro ao fechar o leilão:", auctionUpdateError);
+            return { error: auctionUpdateError };
+        }
+        
+        // 3. (Opcional) Atualizar o status do lance para 'accepted'
+        const { error: bidUpdateError } = await supabase
+            .from('bids')
+            .update({ status: 'accepted' })
+            .eq('id', bidId);
+            
+        if (bidUpdateError) {
+            console.error("Erro ao aceitar o lance:", bidUpdateError);
+            // Pode-se decidir reverter a atualização do leilão aqui se necessário
+            return { error: bidUpdateError };
+        }
+
+        await refetch();
+        return { error: null };
+    }, [refetch]);
+
+
+    // Retorno do hook
+    return {
+        auctions,
+        activeAuctions,
+        myAuctions,
+        loading,
+        error,
+        refetch,
+        getAuctionById,
+        getAuctionBids,
+        placeBid,
+        acceptBid,
+        getMyAuctions,
+        createAuction,
+        updateAuction,
+    };
 };

@@ -46,11 +46,10 @@ const ClientProfile: React.FC = () => {
     const [nomeFantasia, setNomeFantasia] = useState('');
     const [endereco, setEndereco] = useState('');
     const [document, setDocument] = useState('');
-    const [documentType, setDocumentType] = useState<'cpf' | 'cnpj'>('cnpj');
+    const [documentType, setDocumentType] = useState<'cpf' | 'cnpj'>('cpf');
     const [telefone, setTelefone] = useState('');
     const [descriptionEdit, setDescriptionEdit] = useState('');
-    const [specialtiesEdit, setSpecialtiesEdit] = useState<string[]>([]);
-    
+
     // Mocks/Placeholders
     const mockPhotos = Array(9).fill("https://via.placeholder.com/150/EEEEEE?text=FOTO"); 
 
@@ -85,7 +84,6 @@ const ClientProfile: React.FC = () => {
                     setDocumentType(fullData.document_type || 'cnpj');
                     setTelefone(fullData.telefone || '');
                     setDescriptionEdit(fullData.description || '');
-                    setSpecialtiesEdit(fullData.specialties || []);
                 } else {
                     setError('Perfil não encontrado.');
                 }
@@ -112,9 +110,8 @@ const ClientProfile: React.FC = () => {
             endereco: endereco,
             document: document,
             document_type: documentType,
-            phone: telefone,
-            description: descriptionEdit, 
-            specialties: specialtiesEdit, 
+            telefone: telefone,
+            description: descriptionEdit,
         };
         
         try {
