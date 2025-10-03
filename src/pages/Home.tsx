@@ -18,7 +18,6 @@ const Home: React.FC = () => {
   const { categories, loading: categoriesLoading, error: categoriesError, refetch: refetchCategories } = useCategories();
 
 
-
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('Todos');
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -28,10 +27,11 @@ const Home: React.FC = () => {
   const [showFloatingMenu, setShowFloatingMenu] = useState(false);
 
 
+  // PONTO DE CORREÇÃO 1: Default Filters não restritivos
   const [filters, setFilters] = useState({
-    availability: 'now',
-    rating: '4.0',
-    experience: '1'
+    availability: 'qualquer', // MUDADO de 'now' para 'qualquer'
+    rating: '0.0',            // MUDADO de '4.0' para '0.0'
+    experience: '0'           // MUDADO de '1' para '0'
   });
 
   const handleCategoryClick = (category: string) => {
@@ -55,29 +55,42 @@ const Home: React.FC = () => {
     }, 800);
   };
 
-  // Dados agora vêm dos hooks do Supabase
-
+  // PONTO DE CORREÇÃO 2: Lógica do useMemo para garantir que o filtro funcione corretamente com os novos defaults
   const filteredProfessionals = useMemo(() => {
     return (professionals || []).filter(professional => {
-      // Filtro por categoria
+      // Usa nome_completo do professionals como a fonte mais segura para busca
+      const nameForSearch = professional.nome_completo || professional.full_name || '';
+      
+      // Filtro por categoria (verifica se a categoria está no array de especialidades)
       const categoryMatch = selectedCategory === 'Todos' || (professional.especialidades && professional.especialidades.includes(selectedCategory));
       
       // Filtro por termo de busca
-      const searchMatch = (professional.full_name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (professional.especialidades && Array.isArray(professional.especialidades) && professional.especialidades.some((s: string) => (s || '').toLowerCase().includes(searchTerm.toLowerCase())));
+      const searchMatch = nameForSearch.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (professional.especialidades && Array.isArray(professional.especialidades) && professional.especialidades.some((s: string) => (s || '').toLowerCase().includes(searchTerm.toLowerCase())));
       
-      // Filtro por distância (REMOVIDO - não disponível no Profile)
-      let distanceMatch = true;
       
-      // Filtro por disponibilidade (Temporarily disabled as 'available' property is missing)
+      // Filtro por rating: (average_rating || 0) garante que null ou undefined se tornem 0 e passem no filtro '0.0'
+      const ratingMatch = (professional.average_rating || 0) >= parseFloat(filters.rating);
+      
+      // Filtro por experiência: (anos_experiencia || 0) garante que null ou undefined se tornem 0 e passem no filtro '0'
+      const experienceMatch = (professional.anos_experiencia || 0) >= parseFloat(filters.experience);
+      
+      // Filtro por disponibilidade
       let availabilityMatch = true;
+      const filterValue = filters.availability.toLowerCase();
       
-      // Filtro por rating
-      // const ratingMatch = (professional.rating || 0) >= parseFloat(filters.rating);
+      if (filterValue === 'agora') {
+          // Só filtra se is_available for explicitamente false/null.
+          availabilityMatch = professional.is_available === true;
+      } else if (filterValue === 'hoje' || filterValue === 'esta semana') {
+          // Por enquanto, esses filtros não fazem nada, mas não quebram a lista
+          availabilityMatch = true; 
+      } 
+      // Se for 'qualquer', availabilityMatch é true (estado inicial)
       
-      return categoryMatch && searchMatch && distanceMatch && availabilityMatch;
+      return categoryMatch && searchMatch && ratingMatch && experienceMatch && availabilityMatch;
     });
-  }, [professionals, selectedCategory, searchTerm]);
+  }, [professionals, selectedCategory, searchTerm, filters]); 
 
   // Verificar se há erros
   if (professionalsError || categoriesError) {
@@ -247,12 +260,13 @@ const Home: React.FC = () => {
                     </div>
                   </div>
                   <div className="p-4 border-t border-gray-200 flex space-x-3">
+                    {/* PONTO DE CORREÇÃO 3: Botão Limpar Filtros */}
                     <button
                       onClick={() => {
                         setFilters({
-                          availability: 'now',
-                          rating: '4.0',
-                          experience: '1'
+                          availability: 'qualquer', // MUDADO para o default não restritivo
+                          rating: '0.0',            // MUDADO para o default não restritivo
+                          experience: '0'           // MUDADO para o default não restritivo
                         });
                       }}
                       className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:scale-105">
@@ -359,7 +373,7 @@ const Home: React.FC = () => {
               className="flex flex-col items-center justify-center text-gray-500 cursor-pointer rounded-2xl smooth-hover"
             >
               <i className="fas fa-comment-alt text-lg"></i>
-              <span className="text-xs mt-1">Chat</span>
+              <span className="text-xs mt-1">Mensagens</span>
             </button>
             <button 
               onClick={() => navigate('/profile')}

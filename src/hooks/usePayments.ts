@@ -36,9 +36,11 @@ export const usePayments = () => {
   const [error, setError] = useState<string | null>(null)
   
   // Configuração padrão de comissões
+  // Taxa única de 15% que inclui TODAS as taxas (gateway + margem da plataforma)
+  // Prestador sempre recebe 85%, independente do método de pagamento
   const defaultCommission: PaymentCommission = {
-    platform_fee_percentage: 15, // 15% para a plataforma
-    provider_percentage: 85, // 85% para o prestador
+    platform_fee_percentage: 15, // 15% total (inclui taxas do Mercado Pago + margem)
+    provider_percentage: 85, // 85% para o prestador (valor líquido)
   }
   
   // Função para calcular valores com comissão

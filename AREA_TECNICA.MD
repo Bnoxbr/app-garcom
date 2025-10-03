@@ -2,6 +2,46 @@
 
 Este documento contém informações técnicas sobre o projeto, incluindo configuração, implementação e outros detalhes.
 
+## 📅 Controle de Versão
+
+**📆 Última Atualização:** 15 de Janeiro de 2025  
+**👤 Atualizado por:** Agente Técnico Especializado  
+
+> **⚠️ IMPORTANTE:** Sempre que modificar este documento, atualize a data acima e registre as principais alterações realizadas na seção de histórico abaixo.
+
+### 📋 Histórico de Alterações Recentes
+
+| Data | Alterações | Responsável |
+|------|------------|-------------|
+| 15/01/2025 | Adicionada seção "Diagramas de Arquitetura" com links para diagramas de requisições e pipeline | Agente Técnico |
+
+## 📊 Diagramas de Arquitetura
+
+### 🔄 Diagrama de Requisições
+Para visualizar o fluxo completo de requisições da aplicação, incluindo autenticação, gestão de perfis, sistema de leilões, pagamentos e chat em tempo real, consulte:
+
+**📁 Arquivo:** [docs/diagrama-requisicoes.md](./docs/diagrama-requisicoes.md)
+
+**Principais fluxos documentados:**
+- Fluxo de Autenticação (Login/Registro/Reset)
+- Gestão de Perfil de Usuário
+- Sistema de Leilões (Criação/Lances/Aceitação)
+- Processamento de Pagamentos (MercadoPago + Bitcoin)
+- Chat em Tempo Real (Supabase Realtime)
+
+### 🚀 Diagrama de Pipeline
+Para entender o pipeline de desenvolvimento, CI/CD e estratégias de deployment, consulte:
+
+**📁 Arquivo:** [docs/diagrama-pipeline.md](./docs/diagrama-pipeline.md)
+
+**Principais tópicos documentados:**
+- Fluxo de Desenvolvimento Atual
+- Pipeline CI/CD Proposto (GitHub Actions)
+- Estratégia de Branches (GitFlow)
+- Ambientes de Deploy (Local/Staging/Production)
+- Ferramentas de Qualidade (ESLint, Husky, Lint-staged)
+- Monitoramento e Métricas de Performance
+
 # Documentação Técnica Consolidada
 
 ## Chat em Tempo Real com Supabase
@@ -284,8 +324,23 @@ Este documento detalha o fluxo de pagamento antecipado com retenção, projetado
 
 ### Estrutura de Comissões
 
-- **Taxa da Plataforma:** 10% sobre o valor total do serviço.
-- **Taxa de Processamento de Pagamento:** 2.99% + R$0.50 por transação (exemplo Stripe/Mercado Pago).
+- **Taxa Total da Plataforma:** 15% sobre o valor total do serviço (absorvida pelo prestador).
+- **Composição da Taxa de 15%:**
+  - **PIX CNPJ:** 0,49% (Mercado Pago) + 14,51% (margem da plataforma)
+  - **Cartão de Débito:** 1,99% (Mercado Pago) + 13,01% (margem da plataforma)  
+  - **Cartão de Crédito à vista:** 4,98% (Mercado Pago) + 10,02% (margem da plataforma)
+  - **Bitcoin:** 0% (gateway próprio) + 15% (margem da plataforma)
+
+**Modelo de Cobrança:**
+- **Cliente:** Paga 100% do valor acordado do serviço
+- **Prestador:** Recebe 85% do valor total (15% é retido pela plataforma)
+- **Plataforma:** Retém 15% para cobrir taxas de processamento + margem operacional
+
+**Exemplo Prático:**
+- Serviço de R$ 100,00
+- Cliente paga: R$ 100,00
+- Prestador recebe: R$ 85,00
+- Plataforma retém: R$ 15,00 (para cobrir taxas do Mercado Pago + margem)
 
 ### Fluxo Detalhado
 

@@ -181,7 +181,7 @@ Este documento detalha os requisitos funcionais e não funcionais para as próxi
 - **Pagamento por Serviço:** Clientes devem poder pagar por serviços contratados diretamente pela plataforma.
 - **Modelo de Assinatura:** Implementar um modelo de assinatura para prestadores de serviço, com diferentes planos e benefícios.
 - **Gestão de Faturas:** O sistema deve gerar e armazenar faturas para todas as transações realizadas.
-- **Política de Retenção:** Implementar a política de retenção de 10% sobre os pagamentos, conforme definido no fluxo de pagamento.
+- **Política de Retenção:** Implementar a política de retenção de 15% sobre os pagamentos, conforme definido no fluxo de pagamento.
 
 ### Requisitos Não Funcionais
 

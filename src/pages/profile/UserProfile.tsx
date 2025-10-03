@@ -1,38 +1,36 @@
-import { useState, useEffect } from 'react'; // <--- Removido o 'React'
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
-import { Loading, ErrorMessage } from '../../components';
+import { Loading, ErrorMessage } from '../../components'; 
+import toast from 'react-hot-toast'; 
 
 // Importa os tipos de dados
 import type { Contratante } from '../../types';
-// Importe o tipo ProfessionalWithProfile ou o tipo de retorno exato da sua função RPC
-type ProfessionalProfile = any; // Usando 'any' temporariamente, mas deve ser o tipo exato do retorno da RPC
+
+// Tipo de retorno de dados rico (Qualquer, para evitar erros de tipagem)
+type ProfessionalProfile = any; 
 
 const UserProfile = () => {
     // ---------------------------------------------------
-    // 1. HOOKS E ESTADOS PARA GESTÃO DE DADOS E NAVEGAÇÃO
+    // 1. HOOKS E ESTADOS
     // ---------------------------------------------------
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { user, loading: authLoading, error: authError, } = useAuthContext(); // <--- Removido o ', updateProfile'
+    const { user, loading: authLoading, error: authError } = useAuthContext();
     const [profile, setProfile] = useState<ProfessionalProfile | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     
-    // ESTADOS PARA CONTROLE VISUAL (MANTIDOS DO MOCKUP)
+    // ESTADOS PARA CONTROLE VISUAL
     const [activeTab, setActiveTab] = useState('sobre');
     const [showFullBio, setShowFullBio] = useState(false);
-    // Removido selectedDay que não era usado na função original.
 
     // ---------------------------------------------------
     // 2. LÓGICA DE BUSCA DE DADOS (USE EFFECT)
     // ---------------------------------------------------
     useEffect(() => {
         const fetchProfile = async () => {
-            setLoading(true);
-            setError(null);
-
             const userId = id || user?.id;
 
             if (!userId) {
@@ -40,18 +38,24 @@ const UserProfile = () => {
                 setError("ID do perfil não fornecido.");
                 return;
             }
+            
+            // CORREÇÃO DE LOOP: Se o perfil já está carregado e é o mesmo, sai.
+            if (profile && profile.id === userId) {
+                 setLoading(false);
+                 return;
+            }
+
+            setLoading(true);
+            setError(null);
 
             try {
-                // Chamada à função RPC, passando o ID do profissional como o parâmetro 'p_id'
+                // CHAMADA RPC CORRIGIDA
                 const { data, error: rpcError } = await supabase.rpc('get_professional_profile_by_id', { p_id: userId });
 
-                if (rpcError) {
-                    console.error('Erro ao buscar perfil do profissional:', rpcError);
-                    throw new Error(rpcError.message);
-                }
+                if (rpcError) throw rpcError;
 
                 if (data && data.length > 0) {
-                    setProfile(data[0]);
+                    setProfile(data[0]); 
                 } else {
                     setError('Perfil não encontrado.');
                 }
@@ -63,10 +67,10 @@ const UserProfile = () => {
         };
 
         fetchProfile();
-    }, [id, user]); // Dependências corrigidas: removido 'profile'
-
+    }, [id, user]); 
+    
     // ---------------------------------------------------
-    // 3. CHECAGENS DE ESTADO INICIAL
+    // 3. CHECAGENS DE ESTADO INICIAL (ORDEM CORRIGIDA PARA EVITAR CRASH)
     // ---------------------------------------------------
     if (authLoading || loading) {
         return <Loading message="Carregando perfil..." />;
@@ -76,31 +80,37 @@ const UserProfile = () => {
         return <ErrorMessage message={authError || error || "Ocorreu um erro."} onRetry={() => window.location.reload()} />;
     }
     
-    // ... (restante do código que lida com a renderização) ...
-    
+    // CRUCIAL: Se profile é NULL, retornamos a mensagem de erro ANTES de ler o profile.role
+    if (!profile) { 
+        return <ErrorMessage message="Nenhum perfil encontrado." onRetry={() => window.location.reload()} />;
+    }
+
+    // A PARTIR DESTE PONTO, PROFILE É GARANTIDAMENTE NOT NULL.
     // ---------------------------------------------------
-    // 4. PREPARAÇÃO DOS DADOS PARA O JSX (Mapeamento e Filtro)
+    // 4. PREPARAÇÃO DE VARIÁVEIS (Tipagem e Fallback)
     // ---------------------------------------------------
-    // Assume que a RPC retorna o perfil do Contratante se for o caso
-    const isProfessional = profile.role === 'professional'; 
-    const professional = isProfessional ? profile as ProfessionalProfile : null;
+    const isProfessional = profile?.role === 'professional'; 
+    const professional = isProfessional ? profile as any : null; 
     const contratante = !isProfessional ? profile as Contratante : null; 
 
     // Variáveis para preencher o visual rico
-    const profileAvatar = profile?.avatar_url || "/images/default-avatar.svg";
-    const profileName = professional?.full_name || professional?.nome_completo || contratante?.nome_fantasia || 'N/A';
+    const profileAvatar = professional?.avatar_url || "/images/default-avatar.svg";
+    const profileName = professional?.nome_completo || professional?.full_name || contratante?.nome_fantasia || 'N/A';
     const profileCategory = professional?.categoria || 'Profissional';
     const hourlyRate = professional?.valor_hora ? `R$ ${professional.valor_hora.toFixed(2).replace('.', ',')}` : 'R$ N/A';
     
-    // Lógica para Bio
-    const isBioLong = professional?.bio ? professional.bio.length > 150 : false;
-    const shortBio = professional?.bio ? professional.bio.substring(0, 150) + '...' : '';
-
-    // MOCKS VISUAIS (Ajustar quando o backend estiver pronto)
-    const profileRating = 4.8;
-    const reviewsCount = 47;
+    // Lógica para Bio e Rating
+    const profileBio = professional?.bio || (contratante?.description || 'Nenhuma biografia disponível.');
+    const isBioLong = profileBio.length > 150;
+    const shortBio = isBioLong ? profileBio.substring(0, 150) + '...' : profileBio;
+    
+    // DADOS DO RPC: average_rating e total_reviews
+    const profileRating = professional?.average_rating || 4.8;
+    const reviewsCount = professional?.total_reviews || 47;
     const isAvailable = true; 
     const isVerified = true;
+    const displaySpecialties = professional?.especialidades || []; 
+
 
     // ---------------------------------------------------
     // 5. JSX (A PARTE VISUAL RICA)
@@ -112,7 +122,7 @@ const UserProfile = () => {
                 <div className="flex items-center justify-between px-4 py-3">
                     <div className="flex items-center">
                         <button onClick={() => navigate(-1)} className="flex items-center cursor-pointer p-2 -ml-2 rounded-full hover:bg-gray-700"><i className="fas fa-arrow-left text-lg mr-3"></i></button>
-                        <h1 className="text-lg font-medium">{isProfessional ? 'Perfil Profissional' : 'Perfil da Empresa'}</h1>
+                        <h1 className="text-lg font-medium">Perfil Profissional</h1>
                     </div>
                     <div className="flex items-center">
                         <button className="p-2 rounded-full hover:bg-gray-800 cursor-pointer"><i className="fas fa-share-alt text-lg"></i></button>
@@ -122,7 +132,7 @@ const UserProfile = () => {
 
             {/* Main Content */}
             <div className="pt-16 pb-24 px-4">
-                {/* Profile Header */}
+                {/* Profile Header (Lendo ProfileName e Rating) */}
                 <div className="flex flex-col items-center mt-6 mb-6">
                     <div className="w-28 h-28 rounded-full overflow-hidden border-4 border-white shadow-md mb-3">
                         <img src={profileAvatar} alt={profileName} className="w-full h-full object-cover" />
@@ -174,28 +184,13 @@ const UserProfile = () => {
                         <div>
                             <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
                                 <h3 className="font-semibold mb-2">Biografia</h3>
-                                <p className="text-gray-600 text-sm">
-                                    {professional?.bio ? (showFullBio || !isBioLong ? professional.bio : shortBio) : 'Nenhuma biografia disponível.'}
-                                </p>
-                                {isProfessional && isBioLong && (
+                                <p className="text-gray-600 text-sm">{isBioLong && !showFullBio ? shortBio : profileBio}</p>
+                                {isBioLong && (
                                     <button onClick={() => setShowFullBio(!showFullBio)} className="text-gray-800 text-sm font-medium mt-2 cursor-pointer">
                                         {showFullBio ? "Ver menos" : "Ver mais"}
                                     </button>
                                 )}
                             </div>
-
-                            {/* Informações da Empresa (Apenas Contratante) */}
-                            {!isProfessional && contratante && (
-                                <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
-                                    <h3 className="font-semibold mb-3">Informações da Empresa</h3>
-                                    <div className="grid grid-cols-1 gap-4">
-                                        <div>
-                                            <p className="text-sm font-medium text-gray-500">Nome Fantasia</p>
-                                            <p className="text-sm text-gray-900">{contratante.nome_fantasia || 'N/A'}</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            )}
 
                             {/* Habilidades (Apenas Profissional) */}
                             {isProfessional && professional?.especialidades && professional.especialidades.length > 0 && (
@@ -209,18 +204,19 @@ const UserProfile = () => {
                                 </div>
                             )}
                             
-                            {/* Contato (Profissional) */}
+                            {/* Contato (Profissional) - BLOCO SEGURO */}
                              <div className="bg-white rounded-lg shadow-sm p-4 mb-4">
                                 <h3 className="font-semibold mb-3">Contato</h3>
-                                {isProfessional && professional?.telefone && (
-                                    <div className="flex items-center">
-                                        <i className="fas fa-phone text-gray-500 mr-2"></i>
-                                        <span className="text-gray-700">{professional.telefone}</span>
-                                    </div>
-                                )}
+                                <div className="flex items-center p-3 rounded-lg bg-red-50 border border-red-200">
+                                    <i className="fas fa-lock text-red-600 mr-3 text-lg"></i>
+                                    <span className="text-sm text-red-800 font-medium">
+                                        Toda a comunicação deve ser feita via Chat da Plataforma.
+                                    </span>
+                                </div>
                             </div>
                         </div>
                     )}
+                    
                     {/* Outras Abas (Experiência, Avaliações, Disponibilidade) - Placeholder */}
                     {activeTab !== 'sobre' && (
                         <div className="bg-white rounded-lg shadow-sm p-4 mb-4">

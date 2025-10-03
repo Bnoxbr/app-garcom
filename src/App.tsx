@@ -13,6 +13,7 @@ import AuctionDetails from '@/pages/auctions/AuctionDetails'; // Importa a pági
 import Chat from '@/pages/shared/Chat';
 import AdvancedSearch from '@/pages/shared/AdvancedSearch';
 import AuctionServices from '@/pages/shared/AuctionServices';
+import ServiceBookingExample from '@/components/ServiceBookingExample';
 
 // Importar a página principal (Home)
 import Home from '@/pages/Home';
@@ -59,6 +60,7 @@ const App: React.FC = () => {
                         <Route path="/home" element={<Home />} />
                         <Route path="/search" element={<AdvancedSearch />} />
                         <Route path="/advanced-search" element={<AdvancedSearch />} />
+                        <Route path="/booking-example" element={<ServiceBookingExample />} />
                         
                         {/* Rotas de autenticação */}
                         <Route path="/auth/login" element={<Login />} />
