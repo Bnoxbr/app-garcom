@@ -106,7 +106,9 @@ npm run dev
 
 **Nota:** Este documento substitui os arquivos ANALISE_DETALHADA_PROJETO.md, CORRECOES_ANALISE.md, CORRECOES_BUILD_DEPLOY.md e PROXIMAS_ACOES_PRIORITARIAS.md, consolidando as informações mais atuais e relevantes.
 
-*Última atualização: 19/07/2024*
+*Última atualização: 03/10/2025*
+
+- Atualizado: consolidação das seções da aba Gestão (Documentos, Avaliações, Financeiro, Histórico) e refatoração do ClientProfile.tsx; correções de sintaxe e melhorias de navegação.
 
 *Nota: Sempre que este documento for atualizado ou alterado, a data da última alteração deve ser atualizada acima.*
 

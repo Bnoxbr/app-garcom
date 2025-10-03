@@ -116,6 +116,6 @@
 
 ---
 
-*Última atualização: 18/07/2024*
+*Última atualização: 03/10/2025*
 
 *Nota: Sempre que este documento for atualizado ou alterado, a data da última alteração deve ser atualizada acima.*

@@ -126,6 +126,8 @@ Para informações detalhadas sobre o status atual do projeto, consulte o arquiv
 
 ---
 
-*Última atualização: 18/07/2024*
+ *Última atualização: 03/10/2025*
+
+ - Atualizado: integração das seções dinâmicas da aba Gestão e refatoração do ClientProfile.tsx.
 
 *Nota: Sempre que este documento for atualizado ou alterado, a data da última alteração deve ser atualizada acima.*

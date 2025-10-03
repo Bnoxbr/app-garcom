@@ -4,7 +4,7 @@ Este documento contém informações técnicas sobre o projeto, incluindo config
 
 ## 📅 Controle de Versão
 
-**📆 Última Atualização:** 15 de Janeiro de 2025  
+**📆 Última Atualização:** 03 de Outubro de 2025  
 **👤 Atualizado por:** Agente Técnico Especializado  
 
 > **⚠️ IMPORTANTE:** Sempre que modificar este documento, atualize a data acima e registre as principais alterações realizadas na seção de histórico abaixo.
@@ -13,6 +13,7 @@ Este documento contém informações técnicas sobre o projeto, incluindo config
 
 | Data | Alterações | Responsável |
 |------|------------|-------------|
+| 03/10/2025 | Integração das seções dinâmicas da aba Gestão, refatoração do ClientProfile.tsx, correções críticas de sintaxe e investigação de perfis/RPCs | Agente Técnico |
 | 15/01/2025 | Adicionada seção "Diagramas de Arquitetura" com links para diagramas de requisições e pipeline | Agente Técnico |
 
 ## 📊 Diagramas de Arquitetura

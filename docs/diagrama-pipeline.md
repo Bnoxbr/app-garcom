@@ -1,5 +1,7 @@
 # Pipeline de Desenvolvimento - App Garçom
 
+> Atualização — 03/10/2025: Diagrama ajustado conforme fluxo atual de desenvolvimento e build, incluindo uso do Vite Dev Server e proposta de CI/CD com GitHub Actions.
+
 ## 🚀 Diagrama de Pipeline CI/CD
 
 ### 1. **Fluxo de Desenvolvimento Atual**

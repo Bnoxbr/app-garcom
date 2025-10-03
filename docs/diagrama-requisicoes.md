@@ -1,5 +1,7 @@
 # Diagrama de Requisições - App Garçom
 
+> Atualização — 03/10/2025: Fluxos revisados para refletir RPCs e páginas atuais (UserProfile, useProfessionals, AuctionDetails).
+
 ## 🔄 Fluxo de Requisições da Aplicação
 
 ### 1. **Fluxo de Autenticação**

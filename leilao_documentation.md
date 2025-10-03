@@ -1,5 +1,7 @@
 # Documentação do Módulo de Leilão
 
+> Atualização — 03/10/2025: Seções revisadas com base no módulo em `AuctionDetails.tsx` e eventos Supabase Realtime para lances.
+
 Este documento serve como a fonte da verdade para o design, regras de negócio e implementação técnica do sistema de leilões da plataforma.
 
 ## 1. Objetivo Principal
