@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { usePayments } from '../hooks/usePayments';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../hooks/useAuth';
-import { Booking } from '../types';
+import type { Booking } from '../types';
 
 interface Payment {
   id: string;
@@ -84,15 +84,15 @@ const AdvancePaymentExample: React.FC = () => {
     if (!booking || !user) return;
 
     const paymentData = {
-      amount: booking.valor,
+      amount: booking.price,
       method: 'pix' as const,
-      description: `Pagamento para ${booking.job_description} em ${new Date(booking.data_servico).toLocaleDateString()}`,
+      description: `Pagamento para ${booking.job_description} em ${new Date(booking.service_date).toLocaleDateString()}`,
       customerEmail: user.email || '',
       customerName: user.user_metadata?.full_name || 'Cliente',
       customerDocument: user.user_metadata?.document || '',
       booking_id: booking.id,
-      provider_id: booking.id_profissional,
-      client_id: booking.id_contratante,
+      provider_id: booking.provider_id,
+      client_id: booking.client_id,
       is_advance_payment: true // Marca como pagamento antecipado
     };
 
@@ -152,8 +152,8 @@ const AdvancePaymentExample: React.FC = () => {
         Reserva: {booking.job_description}
       </p>
       
-      <p className="mb-1">Data: {new Date(booking.data_servico).toLocaleString()}</p>
-      <p className="mb-3">Valor: R$ {booking.valor.toFixed(2)}</p>
+      <p className="mb-1">Data: {new Date(booking.service_date).toLocaleString()}</p>
+      <p className="mb-3">Valor: R$ {booking.price.toFixed(2)}</p>
       
       <div className="flex mt-3 mb-3">
         <span className={`inline-block px-2 py-1 text-xs font-semibold rounded mr-2 ${booking.status === 'confirmed' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'}`}>

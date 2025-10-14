@@ -1,133 +1,62 @@
 # App Garçom 🍽️
 
-Plataforma para contratação de profissionais de gastronomia (garçons, bartenders, chefs, etc.) para eventos.
+**Repositório do Contratante (`app-principal`)**
+
+Esta é a plataforma principal onde contratantes podem descobrir, contratar e pagar por serviços de profissionais de gastronomia. O modelo de negócio é o **"Perfil como Anúncio"**: o perfil do prestador é sua oferta, e o contratante inicia a contratação.
 
 ## 🚀 Tecnologias
 
 - **React 18** com TypeScript
 - **Vite** para build e desenvolvimento
 - **Tailwind CSS** para estilização
-- **Supabase** para backend, autenticação e banco de dados
+- **Supabase** como Backend as a Service (BaaS)
 - **PWA** para instalação em dispositivos móveis
 - **React Router** para navegação
 
-## 📋 Pré-requisitos
+## 📋 Arquitetura de Micro-Frontends
 
-- Node.js 18+ 
-- npm ou yarn
-- Conta no Supabase
+Este projeto faz parte de uma arquitetura de Micro-Frontends:
+
+- **`app-principal` (este repositório):** O aplicativo do **Contratante**. Focado na descoberta de perfis, início da contratação e pagamento.
+- **`app-garcom-prestador` (repositório separado):** O aplicativo do **Prestador de Serviço**. Focado na manutenção do perfil/oferta, gestão de contratações e execução do serviço.
+
+O backend é centralizado no **Supabase**, servindo ambos os frontends.
 
 ## ⚙️ Configuração
 
-### 1. Clone o repositório
-```bash
-git clone <url-do-repositorio>
-cd app-garcom
-```
+1.  **Clone o repositório** e instale as dependências (`npm install`).
+2.  **Configure o Supabase**: Copie `.env.example` para `.env` e preencha com suas chaves.
+3.  **Execute o projeto**: `npm run dev`.
 
-### 2. Instale as dependências
-```bash
-npm install
-```
+## ✅ Funcionalidades e Plano
 
-### 3. Configure o Supabase
+- **Autenticação:**
+  - [x] Registro e Login de Contratantes.
 
-1. Crie um projeto no [Supabase](https://supabase.com)
-2. Copie o arquivo `.env.example` para `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-3. Preencha as variáveis de ambiente no arquivo `.env`:
-   ```env
-   VITE_SUPABASE_URL=https://seu-projeto.supabase.co
-   VITE_SUPABASE_ANON_KEY=sua-chave-anonima
-   ```
+- **Jornada do Contratante:**
+  - [🟡] Navegação no catálogo de perfis de profissionais.
+  - [🔴] Filtros avançados para busca.
+  - [🔴] Formulário de contratação (data, hora, local).
+  - [🔴] Integração de pagamento no ato da contratação (com retenção).
+  - [🟡] Páginas de status de pagamento (Sucesso, Erro, Pendente).
+  - [🔴] UI para avaliação do serviço.
+  - [🟡] Dashboard com histórico de serviços.
 
-### 4. Configure o banco de dados
+- **Tecnologia:**
+  - [x] Progressive Web App (PWA) com suporte a instalação.
 
-1. No painel do Supabase, vá para **SQL Editor**
-2. Execute o arquivo `database/migrations.sql` para criar as tabelas
-3. Execute o arquivo `database/seed-data.sql` para popular com dados de exemplo
+*(Status: 🟢 Concluído, 🟡 Em Andamento, 🔴 Não Iniciado)*
 
-### 5. Execute o projeto
-```bash
-npm run dev
-```
+## 📄 Documentação do Projeto
 
-O aplicativo estará disponível em `http://localhost:5174`
+Para uma compreensão completa, consulte os seguintes documentos:
 
-## 📁 Estrutura do Projeto
-
-```
-src/
-├── components/        # Componentes React reutilizáveis
-├── hooks/             # Custom hooks (auth, data, PWA)
-├── lib/               # Configurações (Supabase)
-├── pages/             # Páginas da aplicação
-│   ├── auth/          # Páginas de autenticação
-│   └── ...            # Outras páginas
-├── types/             # Definições TypeScript
-├── App.tsx            # Componente principal e rotas
-└── main.tsx           # Ponto de entrada
-
-database/
-├── migrations.sql     # Schema do banco
-└── seed-data.sql      # Dados de exemplo
-```
-
-## 🔧 Scripts Disponíveis
-
-- `npm run dev` - Inicia o servidor de desenvolvimento
-- `npm run build` - Gera build de produção
-- `npm run preview` - Visualiza build de produção
-
-## 📱 Funcionalidades
-
-- [x] Sistema de autenticação completo
-- [x] Listagem de profissionais
-- [x] Filtros por categoria
-- [x] Busca por nome
-- [x] Filtros de disponibilidade
-- [x] PWA com suporte offline
-- [ ] Chat em tempo real
-- [ ] Agendamento de serviços
-- [ ] Leilão de serviços
-- [ ] Pagamentos integrados
-
-## 🌐 PWA
-
-O aplicativo está configurado como Progressive Web App (PWA), permitindo:
-
-- Instalação em dispositivos móveis e desktop
-- Funcionamento offline
-- Atualizações automáticas
-- Experiência semelhante a aplicativos nativos
-
-## 🔐 Autenticação
-
-O sistema de autenticação inclui:
-
-- Registro de usuários (prestadores e contratantes)
-- Login com email/senha
-- Recuperação de senha
-- Rotas protegidas por perfil
-
-## 🤝 Contribuição
-
-1. Faça um fork do projeto
-2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
-3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
-4. Push para a branch (`git push origin feature/AmazingFeature`)
-5. Abra um Pull Request
-
-## 📄 Status do Projeto
-
-Para informações detalhadas sobre o status atual do projeto, consulte o arquivo [PROJETO_STATUS_ATUAL.md](./PROJETO_STATUS_ATUAL.md).
+1.  **[FLUXO_DE_CONTRATACAO_V2.md](./FLUXO_DE_CONTRATACAO_V2.md):** Detalha o fluxo "Perfil como Anúncio".
+2.  **[PROJETO_STATUS_ATUAL.md](./PROJETO_STATUS_ATUAL.md):** Descreve o status de implementação.
+3.  **[PLANO_DE_PRODUCAO.md](./PLANO_DE_PRODUCAO.md):** Apresenta o checklist de tarefas do frontend.
 
 ---
 
- *Última atualização: 03/10/2025*
+*Última atualização: 07 de Outubro de 2025*
 
- - Atualizado: integração das seções dinâmicas da aba Gestão e refatoração do ClientProfile.tsx.
-
-*Nota: Sempre que este documento for atualizado ou alterado, a data da última alteração deve ser atualizada acima.*
+- Atualizado para refletir a mudança para o modelo **"Perfil como Anúncio"**.

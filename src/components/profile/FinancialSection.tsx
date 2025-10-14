@@ -1,77 +1,46 @@
-import React, { useState } from 'react';
-import toast from 'react-hot-toast';
+import React from 'react';
+import { Trash2, PlusCircle } from 'lucide-react';
 
-interface CreditCard {
+interface Card {
   id: string;
   last4: string;
   brand: string;
-  is_default: boolean;
+  isDefault: boolean;
 }
 
 interface FinancialSectionProps {
-  cards: CreditCard[];
-  onAddCard: (cardData: any) => void; // A ser definido com a integração de pagamento
+  cards: Card[];
   onDeleteCard: (cardId: string) => void;
-  onSetDefault: (cardId: string) => void;
+  onSetDefaultCard: (cardId: string) => void;
 }
 
-const mockCards: CreditCard[] = [
-  {
-    id: 'card_1',
-    last4: '4242',
-    brand: 'Visa',
-    is_default: true,
-  },
-  {
-    id: 'card_2',
-    last4: '8431',
-    brand: 'Mastercard',
-    is_default: false,
-  },
-];
-
-const FinancialSection: React.FC<FinancialSectionProps> = ({ 
-    cards = mockCards, 
-    onAddCard, 
-    onDeleteCard, 
-    onSetDefault 
-}) => {
-  const [isAdding, setIsAdding] = useState(false);
-
-  const handleAddCard = () => {
-    // Lógica para abrir o modal/formulário de adição de cartão
-    toast.success('Funcionalidade para adicionar cartão a ser implementada.');
-    // onAddCard({ ... });
-  };
+const FinancialSection: React.FC<FinancialSectionProps> = ({ cards, onDeleteCard, onSetDefaultCard }) => {
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-4 mt-4">
-      <h3 className="font-semibold text-lg mb-4">Área Financeira</h3>
-      <div className="space-y-3">
+    <div className="bg-white p-6 rounded-lg shadow-md">
+      <h3 className="text-xl font-semibold mb-4">Gestão Financeira</h3>
+      <div className="space-y-4">
         {cards.map((card) => (
-          <div key={card.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center">
-              <i className={`fab fa-cc-${card.brand.toLowerCase()} text-2xl mr-3`}></i>
+          <div key={card.id} className={`p-4 rounded-lg border ${card.isDefault ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+            <div className="flex justify-between items-start">
               <div>
-                <p className="font-medium">**** **** **** {card.last4}</p>
-                {card.is_default && <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">Padrão</span>}
+                <p className="font-semibold text-gray-800">{card.brand} **** {card.last4}</p>
+                {card.isDefault && <span className="text-xs font-medium text-blue-600">Padrão</span>}
               </div>
-            </div>
-            <div className="flex items-center gap-2">
-              {!card.is_default && (
-                <button onClick={() => onSetDefault(card.id)} className="text-gray-500 hover:text-blue-600 text-sm">Definir Padrão</button>
-              )}
-              <button onClick={() => onDeleteCard(card.id)} className="text-red-500 hover:text-red-700">
-                <i className="fas fa-trash-alt"></i>
-              </button>
+              <div className="flex items-center space-x-2">
+                {!card.isDefault && (
+                  <button onClick={() => onSetDefaultCard(card.id)} className="text-sm text-blue-600 hover:underline">Definir como padrão</button>
+                )}
+                <button onClick={() => onDeleteCard(card.id)} className="text-red-500 hover:text-red-700 p-1 rounded-full hover:bg-red-100">
+                  <Trash2 className="w-5 h-5" />
+                </button>
+              </div>
             </div>
           </div>
         ))}
       </div>
-      <button 
-        onClick={handleAddCard} 
-        className="w-full mt-4 py-2 text-center text-blue-600 font-medium bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors"
-      >
+      <button className="mt-4 w-full flex items-center justify-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+        <PlusCircle className="w-5 h-5 mr-2" />
         Adicionar Novo Cartão
       </button>
     </div>

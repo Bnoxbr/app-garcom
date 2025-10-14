@@ -31,12 +31,19 @@ type ClientProfileData = Contratante & {
 // Definições de Interface para a Aba Gestão (Baseado no seu modelo)
 interface Document { id: string; name: string; url: string; type: string; uploaded_at: string; }
 interface Review { id: string; author: string; author_photo: string; rating: number; comment: string; date: string; }
-interface CreditCard { id: string; last4: string; brand: string; is_default: boolean; }
+interface CreditCard { id: string; last4: string; brand: string; isDefault: boolean; 
+}
 
 
 // URLs de Placeholders
 const mockCoverImage = "https://placehold.co/400x150/000000/FFFFFF?text=CAPA"; 
 const mockLogoImage = "https://placehold.co/100x100/4F46E5/FFFFFF?text=LOGO";
+
+const mockDocuments: Document[] = [
+    { id: 'doc1', name: 'CNPJ da Empresa.pdf', url: '#', type: 'pdf', uploaded_at: '2023-10-26' },
+    { id: 'doc2', name: 'Alvará de Funcionamento.pdf', url: '#', type: 'pdf', uploaded_at: '2023-10-25' },
+];
+
 // Mock para Horários
 const mockOpeningHours = [
     { day: "Segunda-feira", hours: "11:00 - 22:00" },
@@ -44,17 +51,9 @@ const mockOpeningHours = [
 ];
 // MOCK de Histórico de Contratações
 const hiringHistory = [
-    { id: 1, name: "Mariana Silva", position: "Garçonete", date: "15/04/2025", status: "Finalizado", rating: 4.8 },
-    { id: 2, name: "Carlos Oliveira", position: "Chef Auxiliar", date: "02/05/2025", status: "Em andamento", rating: 4.9 },
+    { id: 1, name: "Mariana Silva", position: "Garçonete", date: "15/04/2025", status: "Finalizado", rating: 4.8, photo: "https://i.pravatar.cc/40?u=3" },
+    { id: 2, name: "Carlos Oliveira", position: "Chef Auxiliar", date: "02/05/2025", status: "Em andamento", rating: 4.9, photo: "https://i.pravatar.cc/40?u=4" },
 ];
-const mockCards: CreditCard[] = [
-    { id: 'card1', last4: '4242', brand: 'Visa', is_default: true },
-    { id: 'card2', last4: '5555', brand: 'Mastercard', is_default: false },
-];
-const mockReviews: Review[] = [
-    { id: 'r1', author: 'Chef João', author_photo: '#', rating: 5, comment: 'Excelente trabalho!', date: 'Ontem' },
-];
-
 
 // --- COMPONENTE AUXILIAR: Menu de Ação para a Galeria ---
 interface FloatingActionMenuProps {
@@ -100,24 +99,21 @@ const ClientProfile: React.FC = () => {
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [uploadingCover, setUploadingCover] = useState(false);
     const [logoPreview, setLogoPreview] = useState('');
-    const [coverPreview, setCoverPreview] = useState('');
+    const [coverPreview, setCoverPreview] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState('informacoes');
     const [isEditMode, setIsEditMode] = useState(false);
     const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
-    
-    // ESTADOS DE FORMULÁRIO (DEVE SER MANTIDO PARA SALVAR)
+
+    // Estados para os campos de formulário editáveis
     const [nomeFantasia, setNomeFantasia] = useState('');
     const [endereco, setEndereco] = useState('');
-    const [document, setDocument] = useState('');
-    const [documentType, setDocumentType] = useState<'cpf' | 'cnpj'>('cnpj'); 
     const [telefone, setTelefone] = useState('');
     const [descriptionEdit, setDescriptionEdit] = useState('');
     const [specialtiesEdit, setSpecialtiesEdit] = useState<string[]>([]);
-    
-    // ESTADOS PARA A ABA GESTÃO (PREENCHENDO OS VALORES INICIAIS)
-    const [documents, setDocuments] = useState<Document[]>([]);
-    const [reviews, setReviews] = useState<Review[]>(mockReviews); // Usando mock por enquanto
-    const [creditCards, setCreditCards] = useState<CreditCard[]>(mockCards); // Usando mock por enquanto
+    const [documentType, setDocumentType] = useState('');
+
+    // Estados para a aba de Gestão (com dados mockados por enquanto)
+    const [documents, setDocuments] = useState<Document[]>(mockDocuments);
 
     // ---------------------------------------------------
     // 2. LÓGICA DE BUSCA DE DADOS
@@ -148,16 +144,15 @@ const ClientProfile: React.FC = () => {
                     // SINCRONIZAÇÃO DE ESTADOS LOCAIS COM DADOS DO DB
                     setNomeFantasia(fullData.nome_fantasia || '');
                     setEndereco(fullData.endereco || '');
-                    setDocument(fullData.document || '');
-                    setDocumentType(fullData.document_type || 'cnpj');
                     setTelefone(fullData.telefone || '');
                     setDescriptionEdit(fullData.description || '');
-                    setSpecialtiesEdit(fullData.specialties || []);
                     setLogoPreview(fullData.logo_url || ''); 
                     setCoverPreview(fullData.cover_url || '');
+                    setSpecialtiesEdit(fullData.specialties || []);
+                    setDocumentType(fullData.documento || '');
                     
                     // Inicializa os dados da aba Gestão (Se o DB tivesse esses campos)
-                    // setDocuments(fullData.documents || []); // Comentado pois 'documents' não existe no DB
+                    setDocuments(fullData.documents || []); // Comentado pois 'documents' não existe no DB
                     // setCreditCards(fullData.credit_cards || mockCards); // Comentado
                 } else {
                     setError('Perfil não encontrado.');
@@ -179,39 +174,36 @@ const ClientProfile: React.FC = () => {
 
     // Funcao auxiliar para upload de IMAGENS ÚNICAS (Logo/Capa)
     const handleImageUpload = async (
-        file: File, 
-        bucket: 'client-logos' | 'client-gallery', 
-        setUploadingState: (uploading: boolean) => void, 
-        setPreviewUrl: (url: string) => void, 
-        columnToUpdate: 'logo_url' | 'cover_url'
+        file: File,
+        columnToUpdate: 'logo_url' | 'cover_url',
+        setPreviewUrl: React.Dispatch<React.SetStateAction<string | null>>,
+        setUploadingState: React.Dispatch<React.SetStateAction<boolean>>
     ) => {
-        if (!user || !profile) return toast.error("Usuário não autenticado.");
-
+        if (!user) return toast.error("Usuário não autenticado.");
         setUploadingState(true);
+
         const fileExtension = file.name.split('.').pop();
-        const filePath = `${user.id}/${columnToUpdate}_${Date.now()}.${fileExtension}`; 
+        const filePath = `${user.id}/${columnToUpdate}_${Date.now()}.${fileExtension}`;
+        const bucketName = 'client-avatars';
 
         try {
             const { error: uploadError } = await supabase.storage
-                .from(bucket)
+                .from(bucketName)
                 .upload(filePath, file, { upsert: true });
 
             if (uploadError) throw uploadError;
 
-            const { data: publicUrlData } = supabase.storage
-                .from(bucket)
-                .getPublicUrl(filePath);
-
+            const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(filePath);
             const newUrl = publicUrlData.publicUrl;
 
             const { error: dbError } = await supabase
                 .from('contratantes')
-                .update({ [columnToUpdate]: newUrl }) 
+                .update({ [columnToUpdate]: newUrl })
                 .eq('id', user.id);
 
             if (dbError) throw dbError;
 
-            setPreviewUrl(newUrl); 
+            setPreviewUrl(newUrl);
             setProfile(prev => prev ? { ...prev, [columnToUpdate]: newUrl } : null);
             toast.success("Imagem atualizada com sucesso!");
 
@@ -222,7 +214,16 @@ const ClientProfile: React.FC = () => {
             setUploadingState(false);
         }
     };
-    
+
+    const onLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) handleImageUpload(file, 'logo_url', setLogoPreview as React.Dispatch<React.SetStateAction<string | null>>, setUploadingLogo);
+    };
+
+    const onCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (file) handleImageUpload(file, 'cover_url', setCoverPreview, setUploadingCover);
+    };
     // Funcao para upload da Galeria (Adiciona ao Array)
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const file = event.target.files?.[0];
@@ -284,34 +285,129 @@ const ClientProfile: React.FC = () => {
     };
     
     // Funcao para deletar uma foto da galeria (Remove do array)
-    const handleDeletePhoto = async (url: string) => { /* ... lógica de exclusão ... */ };
+    const handleDeletePhoto = async (photoUrl: string) => {
+        if (!profile || !user) return;
 
-    // Handlers para Inputs
-    const onLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.[0]) {
-            handleImageUpload(e.target.files[0], 'client-logos', setUploadingLogo, setLogoPreview, 'logo_url');
+        try {
+            const fileName = photoUrl.split('/').pop();
+            if (!fileName) {
+                toast.error('Nome do arquivo inválido.');
+                return;
+            }
+
+            const { error } = await supabase.storage
+                .from('client-gallery')
+                .remove([`${user.id}/${fileName}`]);
+
+            if (error) {
+                throw error;
+            }
+
+            const updatedGallery = profile.photos_gallery?.filter(url => url !== photoUrl) || [];
+            setProfile(prev => prev ? { ...prev, photos_gallery: updatedGallery } : null);
+
+            toast.success('Foto excluída com sucesso!');
+            setSelectedPhotoUrl(null); 
+        } catch (error: any) {
+            toast.error(`Erro ao excluir a foto: ${error.message}`);
         }
     };
 
-    const onCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files?.[0]) {
-            handleImageUpload(e.target.files[0], 'client-gallery', setUploadingCover, setCoverPreview, 'cover_url');
+    const handleSaveChanges = async () => {
+        if (!profile) return
+
+        const updates = {
+            id: profile.id,
+            nome_fantasia: nomeFantasia,
+            // endereco: endereco,
+            telefone: telefone,
+            descricao: descriptionEdit,
+            especialidades: specialtiesEdit,
+            documento: document,
+            tipo_documento: documentType,
+            updated_at: new Date(),
+        }
+
+        try {
+            const { error } = await supabase.from('profiles').upsert(updates)
+
+            if (error) {
+                throw error
+            }
+
+            toast.success('Perfil atualizado com sucesso!')
+            // setIsEditMode(false)
+        } catch (error: any) {
+            toast.error(`Erro ao atualizar o perfil: ${error.message}`)
+        }
+    }
+
+    const handleDocumentUpload = async (file: File) => {
+        if (!user || !profile) return toast.error("Usuário não autenticado.");
+
+        setLoading(true);
+        const filePath = `${user.id}/documents/${file.name}`;
+        const bucketName = 'client-documents';
+
+        try {
+            const { error: uploadError } = await supabase.storage
+                .from(bucketName)
+                .upload(filePath, file, { upsert: true });
+
+            if (uploadError) throw uploadError;
+
+            const { data: publicUrlData } = supabase.storage
+                .from(bucketName)
+                .getPublicUrl(filePath);
+
+            const newDocUrl = publicUrlData.publicUrl;
+
+            // Assumindo que 'documents' é um array de objetos {name, url}
+            const newDocument: Document = { 
+                id: `doc_${Date.now()}`,
+                name: file.name, 
+                url: newDocUrl, 
+                type: file.type || 'unknown',
+                uploaded_at: new Date().toISOString() 
+            };
+            const updatedDocuments = [...(profile.documents || []), newDocument];
+
+
+            const { error: dbError } = await supabase
+                .from('contratantes')
+                .update({ documents: updatedDocuments })
+                .eq('id', user.id);
+
+            if (dbError) throw dbError;
+
+            setProfile(prev => prev ? { ...prev, documents: updatedDocuments } : null);
+            toast.success("Documento enviado com sucesso!");
+
+        } catch (err: any) {
+            console.error("Erro no upload do documento:", err);
+            toast.error(err.message || "Falha ao enviar o documento.");
+        } finally {
+            setLoading(false);
         }
     };
 
-    const handleSaveChanges = async () => { /* ... lógica de salvamento mantida ... */ };
-    const toggleEditMode = () => { /* ... lógica de edição/salvamento mantida ... */ };
+    const toggleEditMode = () => {
+        if (isEditMode) {
+            handleSaveChanges();
+        }
+        setIsEditMode(!isEditMode);
+    };
 
     // NOVAS FUNÇÕES PARA GESTÃO FINANCEIRA/DOCUMENTOS (PLACEHOLDERS)
-    const handleDocumentUpload = async (file: File) => { toast.info(`Upload de ${file.name} em desenvolvimento.`); };
-    const handleDocumentDelete = async (documentId: string) => { toast.info(`Deletar documento ${documentId} em desenvolvimento.`); };
-    const handleAddCard = () => { toast.info("Adicionar Cartão em desenvolvimento."); };
-    const handleDeleteCard = async (cardId: string) => { toast.info(`Deletar Cartão ${cardId} em desenvolvimento.`); };
-    const handleSetDefaultCard = async (cardId: string) => { toast.info(`Definir ${cardId} como padrão em desenvolvimento.`); };
-
+    const handleDocumentDelete = (docId: string) => { toast(`Deleção do documento ${docId} em desenvolvimento.`); };
+    const handleDeleteCard = (cardId: string) => {
+        console.log("Deletar cartão", cardId);
+        // Lógica para deletar o cartão
+    };
+    const handleSetDefaultCard = async (cardId: string) => { toast(`Definir ${cardId} como padrão em desenvolvimento.`); };
 
     // ---------------------------------------------------
-    // 5. RENDERIZAÇÃO
+    // 5. RENDERIZAÇÃO DO COMPONENTE
     // ---------------------------------------------------
     if (authLoading || loading) return <Loading message="Carregando perfil da empresa..." />;
     if (authError || error) return <ErrorMessage message={authError || error || "Ocorreu um erro."} onRetry={() => window.location.reload()} />;
@@ -522,16 +618,18 @@ const ClientProfile: React.FC = () => {
                             {/* SEÇÃO DE PAGAMENTOS E FINANCEIRO */}
                             <div className="bg-white rounded-lg shadow-sm p-4">
                                 <h3 className="font-semibold text-lg mb-4">Meios de Pagamento</h3>
-                                <FinancialSection 
-                                    cards={creditCards}
-                                    onAddCard={handleAddCard}
-                                    onDeleteCard={handleDeleteCard}
-                                    onSetDefault={handleSetDefaultCard}
-                                    isEditMode={isEditMode}
-                                />
-                                <p className="text-xs text-gray-500 mt-4">
-                                    *A gestão de pagamentos requer integração com Mercado Pago e RLS estrito.
-                                </p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <FinancialSection
+                                        cards={profile.credit_cards || []}
+                                        onDeleteCard={handleDeleteCard}
+                                        onSetDefaultCard={handleSetDefaultCard}
+                                    />
+                                    <DocumentsSection
+                                        documents={profile.documents || []}
+                                        onDocumentUpload={handleDocumentUpload}
+                                        onDocumentDelete={handleDocumentDelete}
+                                    />
+                                </div>
                             </div>
 
                             {/* SEÇÃO DE DOCUMENTOS (CNPJ/CPF/Certificados) */}
@@ -539,16 +637,15 @@ const ClientProfile: React.FC = () => {
                                 <h3 className="font-semibold text-lg mb-4">Documentos da Empresa</h3>
                                 <DocumentsSection 
                                     documents={documents}
-                                    onUpload={handleDocumentUpload}
-                                    onDelete={handleDocumentDelete}
-                                    isEditMode={isEditMode}
+                                    onDocumentUpload={handleDocumentUpload}
+                                    onDocumentDelete={handleDocumentDelete}
                                 />
                             </div>
 
                             {/* SEÇÃO DE AVALIAÇÕES */}
                             <div className="bg-white rounded-lg shadow-sm p-4">
                                 <h3 className="font-semibold text-lg mb-4">Avaliações Recebidas</h3>
-                                <ReviewsSection reviews={reviews} />
+                                <ReviewsSection reviews={profile.reviews || []} />
                             </div>
 
                             {/* HISTÓRICO DE SERVIÇOS */}

@@ -1,15 +1,14 @@
 import React, { useState, useEffect } from 'react'
-import { X, Calendar, Clock, MapPin, User, DollarSign, CreditCard, Smartphone, Bitcoin, AlertCircle } from 'lucide-react'
+import { X, Calendar, Clock, MapPin, CreditCard, Smartphone, Bitcoin, AlertCircle } from 'lucide-react'
 import { usePayments } from '../hooks/usePayments'
 import type { PaymentMethod, PaymentData } from '../hooks/usePayments'
-import type { Profissional, Booking } from '../types'
+import type { Profissional } from '../types'
 import { Loading } from './Loading'
 
 interface ServiceBookingModalProps {
   isOpen: boolean
   onClose: () => void
   professional: Profissional
-  onBookingSuccess: (booking: Booking) => void
 }
 
 interface BookingFormData {
@@ -24,10 +23,9 @@ interface BookingFormData {
 const ServiceBookingModal: React.FC<ServiceBookingModalProps> = ({
   isOpen,
   onClose,
-  professional,
-  onBookingSuccess
+  professional
 }) => {
-  const { loading, error, processPayment, calculateCommission } = usePayments()
+  const { loading, error, processPayment } = usePayments()
   const [currentStep, setCurrentStep] = useState<'booking' | 'payment' | 'confirmation'>('booking')
   const [bookingData, setBookingData] = useState<BookingFormData>({
     serviceDate: '',
@@ -54,16 +52,13 @@ const ServiceBookingModal: React.FC<ServiceBookingModalProps> = ({
 
   // Calcular valores automaticamente
   const totalServiceValue = bookingData.estimatedPrice * bookingData.duration
-  const commission = calculateCommission(totalServiceValue)
   const advancePayment = totalServiceValue * 0.3 // 30% de entrada
 
   useEffect(() => {
-    if (professional.valor_hora) {
-      setBookingData(prev => ({
-        ...prev,
-        estimatedPrice: professional.valor_hora
-      }))
-    }
+    setBookingData(prev => ({
+      ...prev,
+      estimatedPrice: professional.valor_hora ?? prev.estimatedPrice,
+    }))
   }, [professional.valor_hora])
 
   if (!isOpen) return null
@@ -190,18 +185,17 @@ const ServiceBookingModal: React.FC<ServiceBookingModalProps> = ({
         setCurrentStep('confirmation')
         
         // Criar booking no banco de dados
-        const booking: Partial<Booking> = {
+        /* const booking: Partial<Booking> = {
           service_date: `${bookingData.serviceDate}T${bookingData.serviceTime}`,
           price: totalServiceValue,
           job_description: bookingData.jobDescription,
           provider_id: professional.id,
           status: 'pending',
           payment_status: 'paid'
-        }
-        
-        // Aqui você chamaria a API para salvar o booking
-        // const savedBooking = await createBooking(booking)
-        // onBookingSuccess(savedBooking)
+        } */
+
+        // Chamar a função de sucesso para notificar o componente pai
+        // onBookingSuccess(booking as Booking) // Futuramente, passar o booking completo
       }
     } catch (err) {
       console.error('Erro no pagamento:', err)
