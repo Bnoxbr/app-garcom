@@ -98,7 +98,8 @@ const Home: React.FC = () => {
           <div className="mt-4 mb-6">
             <div className="flex justify-between items-start">
               <div>
-                <h2 className="text-xl font-semibold text-gray-800">
+                {/* ALTERAÇÃO DE COR AQUI: text-gray-800 -> text-mr-dark-blue */}
+                <h2 className="text-xl font-semibold text-mr-dark-blue">
                   {user && profile ? `Olá, ${profile.full_name?.split(' ')[0] || 'Utilizador'}!` : 'Olá, seja bem-vindo!'}
                 </h2>
                 <p className="text-gray-600">Encontre profissionais qualificados para o seu evento ou estabelecimento</p>
@@ -125,7 +126,8 @@ const Home: React.FC = () => {
             <button onClick={() => setShowFilterModal(true)} className="absolute right-20 top-1/2 transform -translate-y-1/2 text-gray-500 cursor-pointer p-2">
                 <i className="fas fa-filter"></i>
             </button>
-            <button onClick={() => {}} className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-gray-800 text-white px-3 py-1 rounded-lg text-sm hover:bg-gray-900 transition-colors">
+            {/* ALTERAÇÃO DE COR AQUI: bg-gray-800 -> bg-mr-dark-blue E hover:bg-gray-900 -> hover:bg-[#2c3e50] */}
+            <button onClick={() => {}} className="absolute right-3 top-1/2 transform -translate-y-1/2 bg-mr-dark-blue text-white px-3 py-1 rounded-lg text-sm hover:bg-[#2c3e50] transition-colors">
               Buscar
             </button>
             {showFilterModal && (
@@ -140,15 +142,17 @@ const Home: React.FC = () => {
           {/* --- SECÇÃO DE CATEGORIAS INTEGRADA E CORRIGIDA --- */}
           <div className="mb-6 slide-up">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-semibold text-gray-800">Categorias</h3>
+              {/* ALTERAÇÃO DE COR AQUI: text-gray-800 -> text-mr-dark-blue */}
+              <h3 className="text-lg font-semibold text-mr-dark-blue">Categorias</h3>
             </div>
             <div className="flex overflow-x-auto pb-2 space-x-3">
               {categories.map((category) => (
                 <div
                   key={category.id}
                   className={`flex flex-col items-center justify-center flex-shrink-0 w-24 h-24 p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
+                    // ALTERAÇÃO DE COR AQUI: bg-gray-800 -> bg-mr-dark-blue
                     selectedCategory === category.name
-                      ? "bg-gray-800 text-white shadow-lg"
+                      ? "bg-mr-dark-blue text-white shadow-lg"
                       : "bg-white text-gray-700 shadow-md hover:shadow-lg"
                   }`}
                   onClick={() => handleCategoryClick(category.name)}
