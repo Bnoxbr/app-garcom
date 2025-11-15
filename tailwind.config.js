@@ -7,11 +7,11 @@ export default {
   theme: {
     extend: {
       colors: {
-        // COR ATUALIZADA: O novo Azul Marinho Profundo
-        'mr-dark-blue': '#020530', 
-        
-        // Cor de Destaque/Ação: Mantida
-        'mr-highlight': '#F03941', 
+        // NOVO: Cor Principal da StafferWork (Azul mais Vivo)
+        'sw-blue-primary': '#2563EB', // blue-600
+
+        // NOVO: Cor de Destaque/Ação da StafferWork (Amarelo)
+        'sw-yellow-accent': '#FACC15', // yellow-400
       },
     },
   },

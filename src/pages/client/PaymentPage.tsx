@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabase';
+import { useAuthContext } from '../../hooks/useAuth';
 import { Loading } from '../../components';
 import { toast } from 'sonner';
 

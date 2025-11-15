@@ -1,58 +1,108 @@
-# 🚀 Plano de Produção: Implementação do Modelo "Perfil como Anúncio"
+# 🚀 Plano de Produção: Integração do Fluxo de Contratação
 
-**Última atualização:** 07 de Outubro de 2025
+**Última atualização:** 24/07/2024
 
 ## 1. Visão Geral
 
-Este documento descreve o plano de ação para a implementação do modelo **"Perfil como Anúncio"**. O objetivo é alinhar o desenvolvimento dos Micro-Frontends (`app-principal` e `app-garcom-prestador`) com a infraestrutura de backend já concluída no Supabase.
+Este documento descreve o plano de ação para a implementação e o lançamento do fluxo de contratação ponta a ponta na plataforma "App Garçom". O objetivo é integrar o `app-principal` (Contratante) e o `app-prestador` (Prestador de Serviço) com o backend no Supabase, garantindo uma experiência coesa e funcional para ambos os usuários.
 
-Este plano substitui versões anteriores e está alinhado com os documentos `FLUXO_DE_CONTRATACAO_V2.md` e `PROJETO_STATUS_ATUAL.md`.
+O plano está alinhado com os documentos `FLUXO_DE_CONTRATACAO_V2.md` e `PROJETO_STATUS_ATUAL.md`.
 
-## 2. Status da Arquitetura
+## 2. Arquitetura e Divisão de Responsabilidades
 
 - **Arquitetura:** Micro-Frontends com PWA.
   - `app-principal`: Aplicativo do Contratante.
-  - `app-garcom-prestador`: Aplicativo do Prestador de Serviço.
-- **Backend (Supabase):** 🟢 **Concluído**. A infraestrutura está pronta para ser consumida.
+  - `app-prestador`: Aplicativo do Prestador de Serviço.
+- **Backend:** Centralizado no Supabase.
 
-## 3. Plano de Implementação do Frontend (Nossa Responsabilidade)
+- **Divisão de Responsabilidades:**
+  - **Backend (Supabase):** Sob responsabilidade do Arquiteto de Software/DBA.
+  - **Frontend (React/PWA):** Sob responsabilidade do time de desenvolvimento front-end (nossa equipe).
 
-O foco exclusivo do desenvolvimento é no frontend. As tarefas estão divididas entre os dois aplicativos.
+## 3. Plano de Implementação do Backend (A ser executado pelo DBA)
 
-### 3.1. App do Prestador (`app-garcom-prestador`)
+Esta é a lista de tarefas que o responsável pelo backend deve seguir para preparar a infraestrutura no Supabase.
 
-| Fase | Tarefa | Status |
-| :--- | :--- | :--- |
-| **1** | **Gestão do Perfil/Oferta** | 🔴 Não Iniciada |
-| | 1.1. UI para criar e editar o perfil profissional (valor, disponibilidade, etc.). | 🔴 Não Iniciada |
-| **2** | **Gestão de Contratações** | 🔴 Não Iniciada |
-| | 2.1. Dashboard para visualizar pedidos de contratação (`status = 'pendente'`). | 🔴 Não Iniciada |
-| | 2.2. Implementar ações de "Confirmar" ou "Recusar" contratação. | 🔴 Não Iniciada |
-| **3** | **Execução do Serviço** | 🔴 Não Iniciada |
-| | 3.1. UI para visualizar serviços confirmados (`status = 'aceito'`). | 🔴 Não Iniciada |
-| | 3.2. Funcionalidade de Check-in e Check-out no dia do serviço. | 🔴 Não Iniciada |
+### 3.1. Tipos e Tabelas
 
-### 3.2. App do Contratante (`app-principal`)
+- **Criar ENUM `status_servico`:**
+  ```sql
+  CREATE TYPE status_servico AS ENUM (
+      'disponivel',
+      'agendado',
+      'em_andamento',
+      'concluido',
+      'cancelado'
+  );
+  ```
 
-| Fase | Tarefa | Status |
-| :--- | :--- | :--- |
-| **1** | **Descoberta e Contratação** | 🟡 Em Andamento |
-| | 1.1. UI para navegar e buscar no catálogo de perfis de profissionais. | 🟡 Em Andamento |
-| | 1.2. Implementar filtros (categoria, avaliação, etc.). | 🔴 Não Iniciada |
-| | 1.3. UI do formulário de contratação (data, hora, local). | 🔴 Não Iniciada |
-| **2** | **Pagamento** | 🔴 Não Iniciada |
-| | 2.1. Integração com SDK do Mercado Pago para pagamento no ato da contratação. | 🔴 Não Iniciada |
-| | 2.2. Criar páginas de status de pagamento (Sucesso, Erro, Pendente). | 🟡 Em Andamento |
-| **3** | **Pós-Serviço** | 🔴 Não Iniciada |
-| | 3.1. UI para avaliação do serviço e do profissional. | 🔴 Não Iniciada |
-| | 3.2. Dashboard para visualizar histórico de serviços contratados. | 🟡 Em Andamento |
+- **Criar Tabela `servicos_realizados`:**
+  ```sql
+  CREATE TABLE servicos_realizados (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      id_contratante UUID REFERENCES auth.users(id),
+      id_prestador UUID REFERENCES auth.users(id),
+      data_servico TIMESTAMP WITH TIME ZONE NOT NULL,
+      valor_acordado NUMERIC(10, 2) NOT NULL,
+      status status_servico NOT NULL DEFAULT 'disponivel',
+      check_in TIMESTAMP WITH TIME ZONE,
+      check_out TIMESTAMP WITH TIME ZONE,
+      localizacao_check_in GEOMETRY(Point, 4326),
+      localizacao_check_out GEOMETRY(Point, 4326),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  );
+  ```
 
-### 3.3. Tarefas Comuns (Ambos os Apps)
+- **Criar Tabela `transacoes`:**
+  ```sql
+  CREATE TABLE transacoes (
+      id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      id_servico UUID REFERENCES servicos_realizados(id),
+      id_pagamento_gateway TEXT NOT NULL, -- ID do pagamento no Mercado Pago
+      status_pagamento TEXT NOT NULL, -- ex: 'approved', 'pending', 'rejected'
+      valor_total NUMERIC(10, 2) NOT NULL,
+      taxa_plataforma NUMERIC(10, 2) NOT NULL,
+      valor_liquido_prestador NUMERIC(10, 2) NOT NULL,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+  );
+  ```
 
-| Fase | Tarefa | Status |
-| :--- | :--- | :--- |
-| **1** | **Notificações** | 🔴 Não Iniciada |
-| | 1.1. Implementar sistema de notificações em tempo real para eventos críticos. | 🔴 Não Iniciada |
-| **2** | **Testes e Deploy** | 🔴 Não Iniciada |
-| | 2.1. Testes de integração ponta a ponta do novo fluxo. | 🔴 Não Iniciada |
-| | 2.2. Deploy para ambiente de produção. | 🔴 Não Iniciada |
+- **Habilitar Extensão `postgis`:**
+  ```sql
+  CREATE EXTENSION IF NOT EXISTS postgis WITH SCHEMA extensions;
+  ```
+
+### 3.2. Funções RPC (Remote Procedure Call)
+
+- **`procurar_profissionais(distancia_maxima, lat, long)`:** Para buscar profissionais disponíveis numa área.
+- **`realizar_check_in(id_servico, lat, long)`:** Para o prestador iniciar o serviço.
+- **`realizar_check_out(id_servico, lat, long)`:** Para o prestador finalizar o serviço.
+
+### 3.3. Lógica de Pagamento (Backend)
+
+- **Criar Webhook no Supabase:** Configurar um endpoint para receber notificações do Mercado Pago.
+- **Criar Edge Function `processar-pagamento`:**
+  - Recebe a notificação do webhook.
+  - Calcula a taxa da plataforma (15%).
+  - Libera o pagamento para o prestador.
+  - Registra a transação na tabela `transacoes`.
+
+## 4. Plano de Implementação do Frontend (Nossa Responsabilidade)
+
+Este é o checklist que guia nosso desenvolvimento.
+
+| Fase | Tarefa | App Alvo | Status |
+| :--- | :--- | :--- | :--- |
+| **1** | **Jornada do Contratante** | `app-principal` | 🔴 Não Iniciada |
+| | 1.1. UI para criar oferta de serviço | `app-principal` | 🔴 Não Iniciada |
+| | 1.2. UI para buscar e selecionar profissionais (integrar com RPC) | `app-principal` | 🔴 Não Iniciada |
+| | 1.3. Integração com Gateway de Pagamento (SDK Frontend do Mercado Pago) | `app-principal` | 🔴 Não Iniciada |
+| | 1.4. UI para avaliação do serviço após conclusão | `app-principal` | 🔴 Não Iniciada |
+| **2** | **Jornada do Prestador** | `app-prestador` | 🔴 Não Iniciada |
+| | 2.1. Dashboard para visualizar e aceitar ofertas de serviço | `app-prestador` | 🔴 Não Iniciada |
+| | 2.2. Funcionalidade de Check-in e Check-out (integrar com RPC) | `app-prestador` | 🔴 Não Iniciada |
+| **3** | **Notificações e Finalização** | `Ambos` | 🔴 Não Iniciada |
+| | 3.1. Implementar sistema de notificações em tempo real (Supabase Realtime) | `Ambos` | 🔴 Não Iniciada |
+| **4** | **Testes e Deploy** | `Ambos` | 🔴 Não Iniciada |
+| | 4.1. Testes de integração ponta a ponta do fluxo | `Ambos` | 🔴 Não Iniciada |
+| | 4.2. Deploy para ambiente de produção | `Ambos` | 🔴 Não Iniciada |
