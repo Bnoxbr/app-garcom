@@ -57,7 +57,7 @@ const ProfessionalsGrid: React.FC<ProfessionalsGridProps> = ({ professionals }) 
              >
                 {/* Imagem de Fundo (100% da altura do Card) */}
                 <img
-                 src={professional.avatar_url || "/images/default-avatar.svg"}
+                 src={professional.avatar_url ? `${professional.avatar_url}?width=360&height=360&quality=85` : "/images/default-avatar.svg"}
                  alt={`Foto de ${displayName}`}
                  className="w-full h-full object-cover"
               loading="lazy"
