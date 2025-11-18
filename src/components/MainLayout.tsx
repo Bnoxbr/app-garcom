@@ -10,7 +10,7 @@ const MainLayout: React.FC = () => {
     const [scrolled, setScrolled] = useState(false);
 
     // [NOVO BRANDING] URL do logo da StafferWork
-    const logoUrl = "https://rtcafnmyuybhxkcxkrzz.supabase.co/storage/v1/object/public/imagens%20diversas/StafferWork.png"; 
+    const logoUrl = "https://rtcafnmyuybhxkcxkrzz.supabase.co/storage/v1/object/public/imagens%20diversas/StafferWork1.png"; 
     
     // Função isActive (Mantida para o menu)
     const isActive = (path: string) => {
