@@ -101,7 +101,6 @@ const Home: React.FC = () => {
                 <h2 className="text-xl font-semibold text-sw-blue-primary">
                   {user && profile ? `Olá, ${profile.full_name?.split(' ')[0] || 'Utilizador'}!` : 'Onde o preparo e a oportunidade se encontram. '}
                 </h2>
-                <p className="text-gray-600">Seja bem-vindo! </p>
                 <p className="text-gray-500 mt-1 text-sm">Encontre profissionais qualificados para o seu evento ou estabelecimento.</p>
               </div>
               <div className="mb-4">
