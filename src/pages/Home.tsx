@@ -101,7 +101,7 @@ const Home: React.FC = () => {
                 <h2 className="text-xl font-semibold text-sw-blue-primary">
                   {user && profile ? `Olá, ${profile.full_name?.split(' ')[0] || 'Utilizador'}!` : 'Onde o preparo e a oportunidade se encontram. '}
                 </h2>
-                <p className="text-gray-500 mt-1 text-sm">Encontre profissionais qualificados para o seu evento ou estabelecimento.</p>
+                <p className="text-gray-500 mt-1 text-sm"></p>
               </div>
               <div className="mb-4">
                 <PWAInstallButton variant="minimal" />
@@ -140,7 +140,7 @@ const Home: React.FC = () => {
           {/* --- SECÇÃO DE CATEGORIAS INTEGRADA E CORRIGIDA --- */}
           <div className="mb-4 slide-up">
             <div className="flex justify-between items-center mb-3">
-              <h3 className="text-lg font-semibold text-sw-blue-primary">Categorias</h3>
+              <h3 className="text-lg font-semibold text-sw-blue-primary">Encontre profissionais qualificados para o seu evento ou estabelecimento.</h3>
             </div>
             <div className="flex overflow-x-auto pb-2 space-x-3">
               {categories.map((category) => (
