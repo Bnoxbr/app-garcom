@@ -147,7 +147,7 @@ const Home: React.FC = () => {
               {categories.map((category) => (
                 <div
                   key={category.id}
-                  className={`flex flex-col items-center justify-center flex-shrink-0 w-24 h-24 p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
+                  className={`flex flex-col items-center justify-center flex-shrink-0 w-20 h-20 p-2 rounded-lg cursor-pointer transition-colors duration-200 ${
                     // CORREÇÃO COMPLETA DOS CARDS DE CATEGORIA (ESTADO ATIVO E INATIVO)
                     selectedCategory === category.name
                       ? "bg-sw-blue-primary text-white shadow-lg border-2 border-sw-blue-primary" 
