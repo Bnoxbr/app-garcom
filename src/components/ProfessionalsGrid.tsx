@@ -57,14 +57,16 @@ const ProfessionalsGrid: React.FC<ProfessionalsGridProps> = ({ professionals }) 
              >
                 {/* Imagem de Fundo (100% da altura do Card) */}
                 <img
-                    src={professional.avatar_url || "/images/default-avatar.svg"}
-                    alt={`Foto de ${displayName}`}
-                    // Imagem ocupa 100% do espaço do Card
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                       (e.currentTarget as HTMLImageElement).src = "/images/default-avatar.svg";
-                    }}
-                />
+                 src={professional.avatar_url || "/images/default-avatar.svg"}
+                 alt={`Foto de ${displayName}`}
+                 className="w-full h-full object-cover"
+              loading="lazy"
+              width="180" 
+              height="180"
+              onError={(e) => {
+           (e.currentTarget as HTMLImageElement).src = "/images/default-avatar.svg";
+       }}
+    />
 
                 {/* Bloco de Gradiente para Legibilidade do Texto */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
