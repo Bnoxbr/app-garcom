@@ -37,7 +37,7 @@ const ProfessionalsGrid: React.FC<ProfessionalsGridProps> = ({ professionals }) 
            const displayName = professional.nome_completo || professional.full_name || 'Profissional';
            const rawRating = professional.average_rating ? Number(professional.average_rating) : 0; 
            const displayRating = (rawRating > 0) ? rawRating.toFixed(1) : 'N/A';
-           const totalReviews = professional.total_reviews || 0;
+           
            const firstSpecialty = professional.especialidades?.[0] || professional.categoria || 'Profissional';
            const isAvailable = professional.is_available || false; 
 
