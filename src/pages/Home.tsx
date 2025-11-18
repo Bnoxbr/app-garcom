@@ -92,7 +92,7 @@ const Home: React.FC = () => {
       </div>
       
       <div className="relative z-10 fade-in">
-        <div className="px-20 relative z-10">
+        <div className="px-20 relative z-10 overflow-x-hidden">
           
           {/* A sua secção de Boas-Vindas original */}
           <div className="mt-3 mb-4">
