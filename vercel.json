@@ -10,10 +10,15 @@
       ]
     }
   ],
+  
   "rewrites": [
     {
       "source": "/robots.txt",
       "destination": "/api/robots"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }

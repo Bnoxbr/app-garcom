@@ -49,7 +49,7 @@ const MainLayout: React.FC = () => {
             
             {/* HEADER: Fundo [mr-dark-blue] -> [sw-blue-primary] */}
             <header className={`fixed top-0 left-0 right-0 z-20 transition-all duration-300 ${scrolled ? 'bg-white shadow-md' : 'bg-sw-blue-primary'}`}>
-                {/* Contêiner interno do header: Adicionado overflow-x-hidden */}
+                {/* Contêiner interno do header: Adicionado overflow-x-hidden e largura do logo corrigida */}
                 <div className="w-full px-4 sm:px-8 py-2 flex justify-between items-center overflow-x-hidden">
                     <div className="flex items-center">
                         {/* LOGO: Limitado a largura máxima (max-w-[150px]) para responsividade */}
@@ -85,7 +85,7 @@ const MainLayout: React.FC = () => {
 
             {/* NAV BAR: flutuante, arredondada e cores migradas */}
             <div className="fixed bottom-6 inset-x-0 max-w-full sm:max-w-xl sm:mx-auto px-4 bg-white rounded-2xl shadow-lg z-20 border border-gray-100">
-                <div className="max-w-4xl mx-auto grid grid-cols-5 h-16">
+                <div className="grid grid-cols-5 h-16">
                     {/* Item 'Início' - ATIVO: text-sw-yellow-accent */}
                     <button onClick={() => navigate('/home')} className={`flex flex-col items-center justify-center transition-colors ${isActive('/home') ? 'text-sw-yellow-accent font-bold' : 'text-gray-500 hover:text-sw-blue-primary'}`}>
                         <i className="fas fa-home text-lg"></i>
