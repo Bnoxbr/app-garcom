@@ -51,7 +51,7 @@ const MainLayout: React.FC = () => {
             <header className={`fixed top-0 left-0 right-0 z-20 transition-all duration-300 ${scrolled ? 'bg-white shadow-md' : 'bg-sw-blue-primary'}`}>
                 <div className="w-full px-4 sm:px-8 py-2 flex justify-between items-center">
                     <div className="flex items-center">
-                        <img src={logoUrl} alt="StafferWork Logo" className="h-14 w-auto" />
+                        <img src={logoUrl} alt="StafferWork Logo" className="h-14 max-w-[150px] w-auto" />
                     </div>
                     <div>
                         {user ? (
