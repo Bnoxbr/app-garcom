@@ -18,7 +18,6 @@ export default defineConfig({
   
   build: {
     rollupOptions: {
-      // ... (Restante da configuração do build mantida)
       output: {
         manualChunks: (id) => {
           if (id.includes('node_modules')) {
@@ -49,8 +48,8 @@ export default defineConfig({
         'apple-touch-icon.png', 
         'masked-icon.svg',
         'pwa-192x192.png',
-        'pwa-512x512.png',
-        'manifest.webmanifest'
+        'pwa-512x512.png'
+        // REMOVIDO 'manifest.webmanifest' daqui também para evitar duplicação manual
       ],
       strategies: 'generateSW',
       injectRegister: 'auto',
@@ -62,17 +61,55 @@ export default defineConfig({
       },
 
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg,webmanifest}'],
+        // CORREÇÃO 1: Removido 'webmanifest' desta lista para evitar o conflito
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,jpg,jpeg}'],
+        
+        // CORREÇÃO 2: Adicionado globIgnores para ignorar explicitamente arquivos conflitantes
+        globIgnores: [
+          "**/node_modules/**/*",
+          "**/manifest.webmanifest",
+          "**/sw.js"
+        ],
+
         skipWaiting: true,
         clientsClaim: true,
         navigateFallback: 'index.html',
         cleanupOutdatedCaches: true,
         runtimeCaching: [
-            // ... (suas configurações de runtimeCaching)
+             // ... Mantenha suas configurações de runtimeCaching aqui se houver ...
+             // Exemplo padrão para cache de imagens se precisar:
+            {
+              urlPattern: ({ request }) => request.destination === 'image',
+              handler: 'CacheFirst',
+              options: {
+                cacheName: 'images',
+                expiration: {
+                  maxEntries: 50,
+                  maxAgeSeconds: 60 * 60 * 24 * 30, // 30 dias
+                },
+              },
+            },
         ]
       },
       manifest: {
-          // ... (sua configuração de manifest mantida)
+          name: 'StafferWork',
+          short_name: 'StafferWork',
+          description: 'Plataforma de contratação de serviços de gastronomia',
+          theme_color: '#ffffff',
+          background_color: '#ffffff',
+          display: 'standalone',
+          icons: [
+            {
+              src: 'pwa-192x192.png',
+              sizes: '192x192',
+              type: 'image/png'
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png'
+            }
+          ]
       }
     })
   ],
