@@ -95,7 +95,7 @@ const Home: React.FC = () => {
         <div className="px-20 relative z-10">
           
           {/* A sua secção de Boas-Vindas original */}
-          <div className="mt-4 mb-6">
+          <div className="mt-3 mb-4">
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-xl font-semibold text-sw-blue-primary">
@@ -114,7 +114,7 @@ const Home: React.FC = () => {
           </div>
 
           {/* A sua Barra de Busca original */}
-          <div className="relative mb-6 slide-up">
+          <div className="relative mb-4 slide-up">
             <input
               type="text"
               placeholder="Buscar garçons, cozinheiros, recepcionistas..."
@@ -139,7 +139,7 @@ const Home: React.FC = () => {
           </div>
 
           {/* --- SECÇÃO DE CATEGORIAS INTEGRADA E CORRIGIDA --- */}
-          <div className="mb-6 slide-up">
+          <div className="mb-4 slide-up">
             <div className="flex justify-between items-center mb-3">
               <h3 className="text-lg font-semibold text-sw-blue-primary">Categorias</h3>
             </div>
@@ -163,7 +163,7 @@ const Home: React.FC = () => {
           </div>
           
           {/* O seu botão de Leilão original */}
-          <div className="mb-6 slide-up">
+          <div className="mb-4 slide-up">
             <button 
               onClick={() => navigate('/auctions')}
               className="w-full py-3 px-4 bg-sw-blue-primary/10 hover:bg-sw-blue-primary/20 text-sw-blue-primary rounded-lg shadow-sm smooth-transition card-hover flex items-center justify-center space-x-2 cursor-pointer border-2 border-sw-yellow-accent"
