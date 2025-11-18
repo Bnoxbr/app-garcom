@@ -81,7 +81,7 @@ const Home: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
+    <div className="relative min-h-screen text-gray-800 pb-24 bg-[#FAF9F6]">
       <div className="absolute inset-0 animated-background parallax-light bg-[#FAF9F6]"></div>
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="particle floating-element"></div>
@@ -92,7 +92,7 @@ const Home: React.FC = () => {
       </div>
       
       <div className="relative z-10 fade-in">
-        <div className="px-20 relative z-10 overflow-x-hidden">
+        <div className="px-6 relative z-10 overflow-x-hidden">
           
           {/* A sua secção de Boas-Vindas original */}
           <div className="mt-3 mb-4">
