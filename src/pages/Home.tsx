@@ -66,7 +66,7 @@ const Home: React.FC = () => {
   // Removido 'categoriesError' e 'categoriesLoading' das condições
   if (professionalsError) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
         <ErrorMessage message={professionalsError || 'Erro ao carregar dados'} onRetry={refetchProfessionals} />
       </div>
     );
@@ -74,15 +74,15 @@ const Home: React.FC = () => {
 
   if (professionalsLoading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
         <Loading message="Carregando profissionais..." size="lg" />
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen text-gray-800 pb-24 bg-gray-100">
-      <div className="absolute inset-0 animated-background parallax-light"></div>
+    <div className="min-h-screen bg-[#FAF9F6] flex items-center justify-center">
+      <div className="absolute inset-0 animated-background parallax-light bg-[#FAF9F6]"></div>
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="particle floating-element"></div>
         <div className="particle floating-element"></div>
@@ -92,17 +92,17 @@ const Home: React.FC = () => {
       </div>
       
       <div className="relative z-10 fade-in">
-        <div className="px-4 relative z-10">
+        <div className="px-20 relative z-10">
           
           {/* A sua secção de Boas-Vindas original */}
           <div className="mt-4 mb-6">
             <div className="flex justify-between items-start">
               <div>
                 <h2 className="text-xl font-semibold text-sw-blue-primary">
-                  {user && profile ? `Olá, ${profile.full_name?.split(' ')[0] || 'Utilizador'}!` : 'Olá, seja bem-vindo!'}
+                  {user && profile ? `Olá, ${profile.full_name?.split(' ')[0] || 'Utilizador'}!` : 'Aonde o preparo e a oportunidade tem hora marcada para se encontrarem. '}
                 </h2>
-                <p className="text-gray-600">Encontre profissionais qualificados para o seu evento ou estabelecimento</p>
-                <p className="text-gray-500 mt-1 text-sm">StafferWork: Aonde o preparo e a oportunidade tem hora marcada para se encontrarem</p>
+                <p className="text-gray-600">Olá, seja bem-vindo! </p>
+                <p className="text-gray-500 mt-1 text-sm">Encontre profissionais qualificados para o seu evento ou estabelecimento.</p>
               </div>
               <div className="mb-4">
                 <PWAInstallButton variant="minimal" />
@@ -118,7 +118,7 @@ const Home: React.FC = () => {
             <input
               type="text"
               placeholder="Buscar garçons, cozinheiros, recepcionistas..."
-              className="w-full py-3 px-4 pr-20 rounded-lg bg-white shadow-sm border-none text-sm smooth-transition focus:shadow-lg focus:scale-[1.02]"
+              className="w-full py-3 px-4 pr-20 rounded-lg bg-white shadow-sm border border-transparent text-sm smooth-transition focus:shadow-lg focus:scale-[1.02] focus:ring-2 focus:ring-sw-yellow-accent focus:border-sw-yellow-accent focus:outline-none"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />

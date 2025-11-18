@@ -29,7 +29,7 @@
 
 /* Classes para animações sutis */
 .animated-background {
-  background: linear-gradient(-45deg, #f8fafc, #f1f5f9, #e2e8f0, #f8fafc);
+  background: linear-gradient(-45deg, #FAF9F6, #F7F7F4, #F5F4F0, #FAF9F6);
   background-size: 400% 400%;
   animation: subtle-gradient-shift 60s ease-in-out infinite;
 }
