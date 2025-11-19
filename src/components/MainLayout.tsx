@@ -10,7 +10,7 @@ const MainLayout: React.FC = () => {
     const [scrolled, setScrolled] = useState(false);
 
     // [NOVO BRANDING] URL do logo da StafferWork
-    const logoUrl = "https://rtcafnmyuybhxkcxkrzz.supabase.co/storage/v1/object/public/imagens%20diversas/StafferWork1.png"; 
+    const logoUrl = "https://rtcafnmyuybhxkcxkrzz.supabase.co/storage/v1/object/public/imagens%20diversas/StafferWork2.png"; 
     
     // Função isActive (Mantida para o menu)
     const isActive = (path: string) => {
@@ -53,7 +53,7 @@ const MainLayout: React.FC = () => {
                 <div className="w-full px-4 sm:px-8 py-2 flex justify-between items-center overflow-x-hidden">
                     <div className="flex items-center">
                         {/* LOGO: Limitado a largura máxima (max-w-[150px]) para responsividade */}
-                        <img src={logoUrl} alt="StafferWork Logo" className="h-14 max-w-[150px] w-auto" />
+                        <img src={logoUrl} alt="StafferWork Logo" className="h-14 max-w-[150px] w-auto object-contain" />
                     </div>
                     <div>
                         {user ? (
