@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { usePayments } from '../hooks/usePayments';
 import { supabase } from '../lib/supabase';
-import { useAuth } from '../hooks/useAuth';
+import { useAuthContext } from '../hooks/useAuth';
 import type { Booking } from '../types';
 
 interface Payment {
@@ -15,7 +15,7 @@ interface Payment {
 }
 
 const AdvancePaymentExample: React.FC = () => {
-  const { user } = useAuth();
+  const { user } = useAuthContext();
   const { 
     processPayment, 
     registerProviderCheckIn, 

@@ -3,59 +3,50 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useAuthContext } from '../../hooks/useAuth';
 import { supabase } from '../../lib/supabase';
 import { Loading, ErrorMessage } from '../../components'; 
-import DocumentsSection from '../../components/profile/DocumentsSection'; // Componente de Documentos
-import FinancialSection from '../../components/profile/FinancialSection'; // Componente Financeiro
-import HiringHistorySection from '../../components/profile/HiringHistorySection'; // Histórico
-import ReviewsSection from '../../components/profile/ReviewsSection'; // Avaliações
-import toast from 'react-hot-toast'; // Assumindo react-hot-toast
+import DocumentsSection from '../../components/profile/DocumentsSection';
+import FinancialSection from '../../components/profile/FinancialSection';
+import HiringHistorySection from '../../components/profile/HiringHistorySection';
+import ReviewsSection from '../../components/profile/ReviewsSection';
+import toast from 'react-hot-toast';
 
-// Importa os tipos de dados
+// [NOVO] Importando o Dashboard para usar na aba
+import ClientDashboard from './ClientDashboard';
+
 import type { Contratante } from '../../types';
 
-// O tipo de retorno da nossa busca, incluindo os novos campos
+// --- CONFIGURAÇÕES ---
+const BUCKET_NAME = 'client-logos';
+const MOCK_COVER_IMAGE = "https://placehold.co/600x200/E2E8F0/94A3B8?text=Capa+do+Estabelecimento"; 
+
+const DEFAULT_OPENING_HOURS = [
+    { day: "Segunda-feira", hours: "Fechado" },
+    { day: "Terça-feira", hours: "18:00 - 23:00" },
+    { day: "Quarta-feira", hours: "18:00 - 23:00" },
+    { day: "Quinta-feira", hours: "18:00 - 23:00" },
+    { day: "Sexta-feira", hours: "18:00 - 00:00" },
+    { day: "Sábado", hours: "12:00 - 00:00" },
+    { day: "Domingo", hours: "12:00 - 17:00" }
+];
+
+// --- TIPAGEM ---
 type ClientProfileData = Contratante & { 
-    email?: string; 
-    description?: string;
-    specialties?: string[];
-    opening_hours?: any;
-    photos_gallery?: string[];
-    logo_url?: string;
-    cover_url?: string;
-    // Novos campos de dados (necessários para a aba Gestão)
+    full_name?: string | null;
+    nome_fantasia?: string | null;
+    endereco?: string | null;
+    phone?: string | null;          
+    description?: string | null;    
+    specialties?: string[] | null;  
+    opening_hours?: { day: string; hours: string }[] | null;
     payment_data?: any; 
-    documents?: Document[];
-    reviews?: Review[];
-    credit_cards?: CreditCard[];
+    
+    reviews?: any[];
+    credit_cards?: any[]; 
+    documents?: any[];
+    logo_url?: string | null;
+    cover_url?: string | null;
 };
 
-// Definições de Interface para a Aba Gestão (Baseado no seu modelo)
-interface Document { id: string; name: string; url: string; type: string; uploaded_at: string; }
-interface Review { id: string; author: string; author_photo: string; rating: number; comment: string; date: string; }
-interface CreditCard { id: string; last4: string; brand: string; isDefault: boolean; 
-}
-
-
-// URLs de Placeholders
-const mockCoverImage = "https://placehold.co/400x150/000000/FFFFFF?text=CAPA"; 
-const mockLogoImage = "https://placehold.co/100x100/4F46E5/FFFFFF?text=LOGO";
-
-const mockDocuments: Document[] = [
-    { id: 'doc1', name: 'CNPJ da Empresa.pdf', url: '#', type: 'pdf', uploaded_at: '2023-10-26' },
-    { id: 'doc2', name: 'Alvará de Funcionamento.pdf', url: '#', type: 'pdf', uploaded_at: '2023-10-25' },
-];
-
-// Mock para Horários
-const mockOpeningHours = [
-    { day: "Segunda-feira", hours: "11:00 - 22:00" },
-    { day: "Terça-feira", hours: "11:00 - 22:00" },
-];
-// MOCK de Histórico de Contratações
-const hiringHistory = [
-    { id: 1, name: "Mariana Silva", position: "Garçonete", date: "15/04/2025", status: "Finalizado", rating: 4.8, photo: "https://i.pravatar.cc/40?u=3" },
-    { id: 2, name: "Carlos Oliveira", position: "Chef Auxiliar", date: "02/05/2025", status: "Em andamento", rating: 4.9, photo: "https://i.pravatar.cc/40?u=4" },
-];
-
-// --- COMPONENTE AUXILIAR: Menu de Ação para a Galeria ---
+// --- SUB-COMPONENTES ---
 interface FloatingActionMenuProps {
     photoUrl: string;
     onClose: () => void;
@@ -63,604 +54,412 @@ interface FloatingActionMenuProps {
     onSetAsCover: () => void;
     onDelete: () => void;
 }
-const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({ photoUrl, onClose, onSetAsLogo, onSetAsCover, onDelete }) => {
-    return (
-        <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50" onClick={onClose}>
-            <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={(e) => e.stopPropagation()}>
-                {/* ... (JSX do menu flutuante) ... */}
-                <div className="p-4 border-b border-gray-200">
-                    <img src={photoUrl} alt="Foto selecionada" className="w-full h-32 object-cover rounded-lg" />
-                </div>
-                <div className="flex flex-col">
-                    <button onClick={onSetAsLogo} className="flex items-center p-4 text-left hover:bg-gray-50 transition-colors"><i className="fas fa-user-circle mr-3 text-lg text-blue-500"></i>Definir como Logo do Perfil</button>
-                    <button onClick={onSetAsCover} className="flex items-center p-4 text-left hover:bg-gray-50 transition-colors"><i className="fas fa-image mr-3 text-lg text-blue-500"></i>Definir como Capa</button>
-                    <button onClick={onDelete} className="flex items-center p-4 text-left hover:bg-red-50 transition-colors text-red-600 border-t border-gray-200"><i className="fas fa-trash-alt mr-3 text-lg"></i>Deletar Foto da Galeria</button>
-                    <button onClick={onClose} className="p-4 text-center text-gray-700 font-medium bg-gray-100 hover:bg-gray-200 transition-colors mt-2">Cancelar</button>
-                </div>
+
+const FloatingActionMenu: React.FC<FloatingActionMenuProps> = ({ photoUrl, onClose, onSetAsLogo, onSetAsCover, onDelete }) => (
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50" onClick={onClose}>
+        <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="p-4 border-b border-gray-200">
+                <img src={photoUrl} alt="Foto selecionada" className="w-full h-32 object-cover rounded-lg" />
+            </div>
+            <div className="flex flex-col">
+                <button onClick={onSetAsLogo} className="flex items-center p-4 text-left hover:bg-gray-50 transition-colors text-sm">
+                    <i className="fas fa-user-circle mr-3 text-lg text-blue-500"></i>Definir como Logo
+                </button>
+                <button onClick={onSetAsCover} className="flex items-center p-4 text-left hover:bg-gray-50 transition-colors text-sm">
+                    <i className="fas fa-image mr-3 text-lg text-blue-500"></i>Definir como Capa
+                </button>
+                <button onClick={onDelete} className="flex items-center p-4 text-left hover:bg-red-50 transition-colors text-red-600 border-t border-gray-200 text-sm">
+                    <i className="fas fa-trash-alt mr-3 text-lg"></i>Deletar
+                </button>
+                <button onClick={onClose} className="p-4 text-center text-gray-700 font-medium bg-gray-100 hover:bg-gray-200 transition-colors mt-2 text-sm">
+                    Cancelar
+                </button>
             </div>
         </div>
-    );
-};
-// --- FIM DO COMPONENTE AUXILIAR ---
+    </div>
+);
 
-
+// --- COMPONENTE PRINCIPAL ---
 const ClientProfile: React.FC = () => {
-    // ---------------------------------------------------
-    // 1. HOOKS E ESTADOS
-    // ---------------------------------------------------
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { user, loading: authLoading, error: authError, updateProfile } = useAuthContext();
+    const { user, loading: authLoading, error: authError, signOut } = useAuthContext();
+    
+    // Estados de Dados
     const [profile, setProfile] = useState<ClientProfileData | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // ESTADOS DE UPLOAD E INTERAÇÃO VISUAL
+    // Estados de UI
     const [uploadingLogo, setUploadingLogo] = useState(false);
     const [uploadingCover, setUploadingCover] = useState(false);
-    const [logoPreview, setLogoPreview] = useState('');
-    const [coverPreview, setCoverPreview] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
     const [activeTab, setActiveTab] = useState('informacoes');
     const [isEditMode, setIsEditMode] = useState(false);
     const [selectedPhotoUrl, setSelectedPhotoUrl] = useState<string | null>(null);
+    const [logoPreview, setLogoPreview] = useState('');
+    const [coverPreview, setCoverPreview] = useState<string | null>(null);
 
-    // Estados para os campos de formulário editáveis
+    // Estados do Formulário
+    const [fullName, setFullName] = useState('');
     const [nomeFantasia, setNomeFantasia] = useState('');
     const [endereco, setEndereco] = useState('');
-    const [telefone, setTelefone] = useState('');
-    const [descriptionEdit, setDescriptionEdit] = useState('');
+    const [telefone, setTelefone] = useState(''); 
+    const [descriptionEdit, setDescriptionEdit] = useState(''); 
     const [specialtiesEdit, setSpecialtiesEdit] = useState<string[]>([]);
-    const [documentType, setDocumentType] = useState('');
+    const [openingHoursEdit, setOpeningHoursEdit] = useState<{ day: string; hours: string }[]>(DEFAULT_OPENING_HOURS);
 
-    // Estados para a aba de Gestão (com dados mockados por enquanto)
-    const [documents, setDocuments] = useState<Document[]>(mockDocuments);
+    // --- UTILS ---
+    const handleLogout = async () => {
+        if (window.confirm("Tem certeza que deseja sair?")) {
+            await signOut();
+            toast.success("Sessão encerrada.");
+            navigate('/auth/login');
+        }
+    };
 
-    // ---------------------------------------------------
-    // 2. LÓGICA DE BUSCA DE DADOS
-    // ---------------------------------------------------
+    const getInitials = (name: string | undefined | null): string => {
+        if (!name) return 'SW';
+        const parts = name.split(' ').filter(p => p.length > 0);
+        if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+        return parts.length > 0 ? parts[0][0].toUpperCase() : 'SW';
+    };
+
+    // --- FETCH DATA ---
     useEffect(() => {
         const fetchProfile = async () => {
             const userId = id || user?.id;
-            if (!userId) { setError('ID não encontrado.'); setLoading(false); return; }
             
-            if (profile) return; // Quebra de Loop
+            if (authLoading) return;
 
-            setLoading(true);
-            setError(null);
+            if (!userId) { 
+                setError('ID de usuário não identificado.');
+                return; 
+            }
             
+            setLoading(true);
             try {
                 const { data, error } = await supabase
                     .from('contratantes')
-                    .select('*, profiles(*)') 
+                    .select('*') 
                     .eq('id', userId)
                     .single();
                 
                 if (error) throw error;
 
                 if (data) {
-                    const fullData = { ...data, email: user?.email };
-                    setProfile(fullData as ClientProfileData);
+                    const profileData = data as ClientProfileData;
+                    profileData.credit_cards = profileData.payment_data?.cards || [];
                     
-                    // SINCRONIZAÇÃO DE ESTADOS LOCAIS COM DADOS DO DB
-                    setNomeFantasia(fullData.nome_fantasia || '');
-                    setEndereco(fullData.endereco || '');
-                    setTelefone(fullData.telefone || '');
-                    setDescriptionEdit(fullData.description || '');
-                    setLogoPreview(fullData.logo_url || ''); 
-                    setCoverPreview(fullData.cover_url || '');
-                    setSpecialtiesEdit(fullData.specialties || []);
-                    setDocumentType(fullData.documento || '');
+                    setProfile(profileData);
                     
-                    // Inicializa os dados da aba Gestão (Se o DB tivesse esses campos)
-                    setDocuments(fullData.documents || []); // Comentado pois 'documents' não existe no DB
-                    // setCreditCards(fullData.credit_cards || mockCards); // Comentado
-                } else {
-                    setError('Perfil não encontrado.');
+                    // Populate Form
+                    setFullName(profileData.full_name || '');
+                    setNomeFantasia(profileData.nome_fantasia || '');
+                    setEndereco(profileData.endereco || '');
+                    setTelefone(profileData.phone || ''); 
+                    setDescriptionEdit(profileData.description || ''); 
+                    setSpecialtiesEdit(profileData.specialties || []); 
+                    
+                    if (profileData.opening_hours && Array.isArray(profileData.opening_hours)) {
+                        setOpeningHoursEdit(profileData.opening_hours);
+                    } else {
+                        setOpeningHoursEdit(DEFAULT_OPENING_HOURS);
+                    }
+                    
+                    // Cache Buster
+                    const ts = Date.now();
+                    setLogoPreview(profileData.logo_url ? `${profileData.logo_url}?t=${ts}` : ''); 
+                    setCoverPreview(profileData.cover_url ? `${profileData.cover_url}?t=${ts}` : '');
                 }
             } catch (err: any) {
                 console.error("Erro ao buscar perfil:", err);
-                setError(err.message);
+                if (err.code !== 'PGRST116') { 
+                     setError("Não foi possível carregar os dados do perfil.");
+                }
             } finally {
                 setLoading(false);
             }
         };
         
         fetchProfile();
-    }, [id, user, updateProfile]);
+        
+    }, [id, user?.id, authLoading]); 
 
-    // ---------------------------------------------------
-    // 3. FUNÇÕES CORE DE UPLOAD, SALVAMENTO E GESTÃO (ADICIONADAS)
-    // ---------------------------------------------------
-
-    // Funcao auxiliar para upload de IMAGENS ÚNICAS (Logo/Capa)
-    const handleImageUpload = async (
-        file: File,
-        columnToUpdate: 'logo_url' | 'cover_url',
-        setPreviewUrl: React.Dispatch<React.SetStateAction<string | null>>,
-        setUploadingState: React.Dispatch<React.SetStateAction<boolean>>
-    ) => {
-        if (!user) return toast.error("Usuário não autenticado.");
+    // --- UPLOAD ---
+    const handleImageUpload = async (file: File, columnToUpdate: 'logo_url' | 'cover_url', setPreviewUrl: any, setUploadingState: any) => {
+        if (!user) return toast.error("Sessão inválida.");
         setUploadingState(true);
 
-        const fileExtension = file.name.split('.').pop();
-        const filePath = `${user.id}/${columnToUpdate}_${Date.now()}.${fileExtension}`;
-        const bucketName = 'client-avatars';
-
         try {
+            const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+            if (sessionError || !session) throw new Error("Sessão expirada. Atualize a página.");
+
+            const fileExt = file.name.split('.').pop();
+            const cleanFileName = file.name.replace(/[^a-zA-Z0-9]/g, ''); 
+            const fileName = `${Date.now()}_${cleanFileName}.${fileExt}`;
+            const filePath = `${user.id}/${columnToUpdate}/${fileName}`; 
+
             const { error: uploadError } = await supabase.storage
-                .from(bucketName)
-                .upload(filePath, file, { upsert: true });
+                .from(BUCKET_NAME)
+                .upload(filePath, file, { upsert: true, contentType: file.type, cacheControl: '3600' });
 
             if (uploadError) throw uploadError;
 
-            const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(filePath);
-            const newUrl = publicUrlData.publicUrl;
-
-            const { error: dbError } = await supabase
-                .from('contratantes')
-                .update({ [columnToUpdate]: newUrl })
-                .eq('id', user.id);
-
+            const { data: { publicUrl } } = supabase.storage.from(BUCKET_NAME).getPublicUrl(filePath);
+            
+            const { error: dbError } = await supabase.from('contratantes').upsert({ 
+                id: user.id,
+                [columnToUpdate]: publicUrl,
+                data_atualizacao: new Date().toISOString() 
+            });
+            
             if (dbError) throw dbError;
 
-            setPreviewUrl(newUrl);
-            setProfile(prev => prev ? { ...prev, [columnToUpdate]: newUrl } : null);
-            toast.success("Imagem atualizada com sucesso!");
+            const newUrlWithCache = `${publicUrl}?t=${Date.now()}`;
+            setPreviewUrl(newUrlWithCache);
+            setProfile(prev => prev ? { ...prev, [columnToUpdate]: publicUrl } : null);
+            toast.success("Imagem atualizada!");
 
         } catch (err: any) {
-            console.error("Erro no upload da imagem:", err);
-            toast.error(err.message || "Falha ao atualizar a imagem. Verifique as Políticas RLS.");
+            console.error("Falha no Upload:", err);
+            toast.error(`Erro: ${err.message || 'Falha no envio.'}`);
         } finally {
             setUploadingState(false);
         }
     };
 
-    const onLogoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) handleImageUpload(file, 'logo_url', setLogoPreview as React.Dispatch<React.SetStateAction<string | null>>, setUploadingLogo);
+    const onLogoChange = (e: any) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'logo_url', setLogoPreview, setUploadingLogo);
+    const onCoverChange = (e: any) => e.target.files?.[0] && handleImageUpload(e.target.files[0], 'cover_url', setCoverPreview, setUploadingCover);
+
+    const handleHourChange = (index: number, value: string) => {
+        const newHours = [...openingHoursEdit];
+        newHours[index].hours = value;
+        setOpeningHoursEdit(newHours);
     };
 
-    const onCoverChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const file = e.target.files?.[0];
-        if (file) handleImageUpload(file, 'cover_url', setCoverPreview, setUploadingCover);
-    };
-    // Funcao para upload da Galeria (Adiciona ao Array)
-    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (!file || !user || !profile) return toast.error("Nenhum arquivo ou perfil logado.");
-
-        const fileExtension = file.name.split('.').pop();
-        const filePath = `${user.id}/gallery_${Date.now()}.${fileExtension}`; 
-        const bucketName = 'client-gallery'; 
-        setLoading(true);
-
-        try {
-            const { error: uploadError } = await supabase.storage.from(bucketName).upload(filePath, file);
-            if (uploadError) throw uploadError;
-            const { data: publicUrlData } = supabase.storage.from(bucketName).getPublicUrl(filePath);
-            const newPhotoUrl = publicUrlData.publicUrl;
-
-            const currentGallery = profile.photos_gallery || [];
-            const { error: dbError } = await supabase
-                .from('contratantes')
-                .update({ photos_gallery: [...currentGallery, newPhotoUrl] })
-                .eq('id', user.id);
-                
-            if (dbError) throw dbError;
-
-            setProfile(prev => prev ? { ...prev, photos_gallery: [...currentGallery, newPhotoUrl] } : null);
-            toast.success("Foto enviada e galeria atualizada!");
-
-        } catch (error: any) {
-            console.error("Falha no upload/DB:", error);
-            setError("Falha ao adicionar foto. Verifique o tamanho/formato.");
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    // Funcao para setar Logo/Capa a partir da Galeria (UPDATE SIMPLES NO DB)
-    const handleSetImageFromGallery = async (url: string, type: 'logo' | 'cover') => {
-        if (!user || !profile) return toast.error("Usuário não autenticado.");
-        
-        const columnToUpdate = type === 'logo' ? 'logo_url' : 'cover_url';
-        
-        try {
-            const { error: dbError } = await supabase
-                .from('contratantes')
-                .update({ [columnToUpdate]: url }) 
-                .eq('id', user.id);
-
-            if (dbError) throw dbError;
-
-            if (type === 'logo') setLogoPreview(url); else setCoverPreview(url);
-            setProfile(prev => prev ? { ...prev, [columnToUpdate]: url } : null);
-            toast.success(`${type === 'logo' ? 'Logo' : 'Capa'} atualizada com sucesso!`);
-            setSelectedPhotoUrl(null); // Fecha o menu
-            
-        } catch (err: any) {
-            console.error(`Erro ao definir ${type}:`, err);
-            toast.error(err.message || `Falha ao definir a foto como ${type}.`);
-        }
-    };
-    
-    // Funcao para deletar uma foto da galeria (Remove do array)
-    const handleDeletePhoto = async (photoUrl: string) => {
-        if (!profile || !user) return;
-
-        try {
-            const fileName = photoUrl.split('/').pop();
-            if (!fileName) {
-                toast.error('Nome do arquivo inválido.');
-                return;
-            }
-
-            const { error } = await supabase.storage
-                .from('client-gallery')
-                .remove([`${user.id}/${fileName}`]);
-
-            if (error) {
-                throw error;
-            }
-
-            const updatedGallery = profile.photos_gallery?.filter(url => url !== photoUrl) || [];
-            setProfile(prev => prev ? { ...prev, photos_gallery: updatedGallery } : null);
-
-            toast.success('Foto excluída com sucesso!');
-            setSelectedPhotoUrl(null); 
-        } catch (error: any) {
-            toast.error(`Erro ao excluir a foto: ${error.message}`);
-        }
-    };
-
+    // --- SAVE ---
     const handleSaveChanges = async () => {
-        if (!profile) return
-
-        const updates = {
-            id: profile.id,
-            nome_fantasia: nomeFantasia,
-            // endereco: endereco,
-            telefone: telefone,
-            descricao: descriptionEdit,
-            especialidades: specialtiesEdit,
-            documento: document,
-            tipo_documento: documentType,
-            updated_at: new Date(),
-        }
+        if (!user) return toast.error("Sessão inválida.");
+        setIsSaving(true);
 
         try {
-            const { error } = await supabase.from('profiles').upsert(updates)
-
-            if (error) {
-                throw error
-            }
-
-            toast.success('Perfil atualizado com sucesso!')
-            // setIsEditMode(false)
-        } catch (error: any) {
-            toast.error(`Erro ao atualizar o perfil: ${error.message}`)
-        }
-    }
-
-    const handleDocumentUpload = async (file: File) => {
-        if (!user || !profile) return toast.error("Usuário não autenticado.");
-
-        setLoading(true);
-        const filePath = `${user.id}/documents/${file.name}`;
-        const bucketName = 'client-documents';
-
-        try {
-            const { error: uploadError } = await supabase.storage
-                .from(bucketName)
-                .upload(filePath, file, { upsert: true });
-
-            if (uploadError) throw uploadError;
-
-            const { data: publicUrlData } = supabase.storage
-                .from(bucketName)
-                .getPublicUrl(filePath);
-
-            const newDocUrl = publicUrlData.publicUrl;
-
-            // Assumindo que 'documents' é um array de objetos {name, url}
-            const newDocument: Document = { 
-                id: `doc_${Date.now()}`,
-                name: file.name, 
-                url: newDocUrl, 
-                type: file.type || 'unknown',
-                uploaded_at: new Date().toISOString() 
+            const updates = {
+                full_name: fullName || null,
+                nome_fantasia: nomeFantasia || null,
+                endereco: endereco || null,
+                phone: telefone || null,                  
+                description: descriptionEdit || null,     
+                specialties: specialtiesEdit || [], 
+                opening_hours: openingHoursEdit || [], 
+                data_atualizacao: new Date().toISOString(),
             };
-            const updatedDocuments = [...(profile.documents || []), newDocument];
 
-
-            const { error: dbError } = await supabase
+            const { error } = await supabase
                 .from('contratantes')
-                .update({ documents: updatedDocuments })
-                .eq('id', user.id);
+                .upsert({
+                    id: user.id,
+                    ...updates
+                });
 
-            if (dbError) throw dbError;
+            if (error) throw error;
 
-            setProfile(prev => prev ? { ...prev, documents: updatedDocuments } : null);
-            toast.success("Documento enviado com sucesso!");
+            toast.success('Perfil salvo!');
+            setIsEditMode(false); 
+            
+            setProfile(prev => {
+                if (!prev) return null;
+                return { ...prev, ...updates, specialties: updates.specialties, opening_hours: updates.opening_hours } as ClientProfileData;
+            });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
 
-        } catch (err: any) {
-            console.error("Erro no upload do documento:", err);
-            toast.error(err.message || "Falha ao enviar o documento.");
+        } catch (error: any) {
+            console.error("Erro ao salvar:", error);
+            if (error.code === '42501') {
+                toast.error("Permissão negada. Login necessário.");
+            } else {
+                toast.error(`Erro ao salvar: ${error.message}`);
+            }
         } finally {
-            setLoading(false);
+            setIsSaving(false);
         }
     };
 
-    const toggleEditMode = () => {
-        if (isEditMode) {
-            handleSaveChanges();
-        }
-        setIsEditMode(!isEditMode);
-    };
+    const shouldShowLoading = (authLoading && !user) || (loading && !profile);
 
-    // NOVAS FUNÇÕES PARA GESTÃO FINANCEIRA/DOCUMENTOS (PLACEHOLDERS)
-    const handleDocumentDelete = (docId: string) => { toast(`Deleção do documento ${docId} em desenvolvimento.`); };
-    const handleDeleteCard = (cardId: string) => {
-        console.log("Deletar cartão", cardId);
-        // Lógica para deletar o cartão
-    };
-    const handleSetDefaultCard = async (cardId: string) => { toast(`Definir ${cardId} como padrão em desenvolvimento.`); };
+    if (shouldShowLoading) return <Loading message="Carregando perfil..." />;
+    if (authError) return <ErrorMessage message={authError} onRetry={() => window.location.reload()} />;
+    if (error && !profile) return <ErrorMessage message={error} onRetry={() => window.location.reload()} />;
+    if (!profile) return <div className="p-10 text-center">Iniciando perfil...</div>;
 
-    // ---------------------------------------------------
-    // 5. RENDERIZAÇÃO DO COMPONENTE
-    // ---------------------------------------------------
-    if (authLoading || loading) return <Loading message="Carregando perfil da empresa..." />;
-    if (authError || error) return <ErrorMessage message={authError || error || "Ocorreu um erro."} onRetry={() => window.location.reload()} />;
-    if (!profile) return <ErrorMessage message="Nenhum perfil de contratante encontrado." onRetry={() => window.location.reload()} />;
-    
-    const displaySpecialties = profile.specialties || []; 
+    const isOwner = user?.id === profile.id;
+    const displaySpecialties = specialtiesEdit.length > 0 ? specialtiesEdit : (profile.specialties || []);
 
     return (
-        <div className="relative min-h-screen bg-gray-50 text-gray-800 pb-16">
-            
-            {/* Menu de Ação Flutuante para Galeria */}
+        <div className="relative min-h-screen bg-[#FAF9F6] text-gray-800 pb-32">
             {selectedPhotoUrl && isEditMode && (
                 <FloatingActionMenu 
-                    photoUrl={selectedPhotoUrl}
-                    onClose={() => setSelectedPhotoUrl(null)}
-                    onSetAsLogo={() => handleSetImageFromGallery(selectedPhotoUrl, 'logo')}
-                    onSetAsCover={() => handleSetImageFromGallery(selectedPhotoUrl, 'cover')}
-                    onDelete={() => handleDeletePhoto(selectedPhotoUrl)}
+                    photoUrl={selectedPhotoUrl} 
+                    onClose={() => setSelectedPhotoUrl(null)} 
+                    onSetAsLogo={() => {}} 
+                    onSetAsCover={() => {}} 
+                    onDelete={() => {}} 
                 />
             )}
-            
-            {/* Navbar FIXA SUPERIOR */}
-            <div className="fixed top-0 w-full bg-gradient-to-r from-gray-700 to-gray-900 text-white shadow-md z-10">
+
+            <div className="fixed top-0 w-full bg-sw-blue-primary text-white shadow-md z-30">
                 <div className="flex items-center justify-between px-4 py-3">
-                    <div className="flex items-center">
-                        <button onClick={() => navigate(-1)} className="flex items-center cursor-pointer p-2 -ml-2 rounded-full hover:bg-gray-700">
-                            <i className="fas fa-arrow-left text-xl mr-3"></i>
+                    <div className="flex items-center gap-3">
+                        {/* NAVEGAÇÃO PARA A HOME */}
+                        <button onClick={() => navigate('/home')} className="p-2 rounded-full hover:bg-white/10">
+                            <i className="fas fa-arrow-left"></i>
                         </button>
-                        <h1 className="text-xl font-bold">Perfil</h1>
+                        <h1 className="font-bold text-lg truncate">{profile.nome_fantasia || 'Empresa'}</h1>
                     </div>
+                    {isOwner && (
+                        <div className="flex items-center gap-1">
+                            <button onClick={handleLogout} className="text-red-200 hover:text-red-100 text-sm flex items-center gap-2 px-3 py-1 rounded hover:bg-white/10 transition-colors">
+                                <i className="fas fa-sign-out-alt"></i> <span className="hidden sm:inline">Sair</span>
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
 
-            {/* Main Content */}
-            <div className="pt-16 pb-16 px-0">
-                {/* 1. SEÇÃO DE CAPA E AVATAR (COM UPLOAD INTEGRADO) */}
-                <div className="relative">
-                    {/* Capa */}
-                    <div className="h-40 w-full overflow-hidden bg-gray-200">
-                        <img src={coverPreview || mockCoverImage} alt="Capa da empresa" className="w-full h-full object-cover object-top" />
+            <div className="pt-14">
+                {/* HERO COVER */}
+                <div className="relative group">
+                    <div className="h-40 w-full bg-gray-300 overflow-hidden relative">
+                        <img src={coverPreview || MOCK_COVER_IMAGE} alt="Capa" className="w-full h-full object-cover" />
                         {isEditMode && (
-                            <label htmlFor="cover-upload" className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center cursor-pointer hover:bg-opacity-60 transition-opacity">
-                                {uploadingCover ? <Loading message="Enviando..." /> : (<><i className="fas fa-camera text-white mr-2"></i><span className="text-white font-semibold">Trocar Capa</span></>)}
-                                <input id="cover-upload" type="file" className="hidden" onChange={onCoverChange} accept="image/*" disabled={uploadingCover} />
+                            <label className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity">
+                                {uploadingCover ? <Loading message="" /> : <div className="text-white flex flex-col items-center"><i className="fas fa-camera text-2xl mb-1"></i><span>Alterar Capa</span></div>}
+                                <input type="file" className="hidden" onChange={onCoverChange} accept="image/*" disabled={uploadingCover} />
                             </label>
                         )}
                     </div>
-                    {/* Logo Flutuante */}
-                    <div className="absolute -bottom-16 left-4 border-4 border-white rounded-full overflow-hidden shadow-lg bg-gray-200">
-                        <div className="relative w-24 h-24">
-                            <img src={logoPreview || mockLogoImage} alt="Logo da empresa" className="w-full h-full object-cover" />
+                    <div className="absolute -bottom-12 left-4">
+                        <div className="relative w-24 h-24 rounded-full border-4 border-white bg-white shadow-md overflow-hidden group/logo">
+                            {logoPreview ? (
+                                <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center bg-sw-yellow-accent/20 text-sw-blue-primary font-bold text-3xl">
+                                    {getInitials(profile.nome_fantasia)}
+                                </div>
+                            )}
                             {isEditMode && (
-                                <label htmlFor="logo-upload" className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center cursor-pointer hover:bg-opacity-60 transition-opacity rounded-full">
-                                    {uploadingLogo ? <Loading message="" /> : <i className="fas fa-camera text-white text-lg"></i>}
-                                    <input id="logo-upload" type="file" className="hidden" onChange={onLogoChange} accept="image/*" disabled={uploadingLogo} />
+                                <label className="absolute inset-0 bg-black/40 flex items-center justify-center cursor-pointer opacity-0 group-hover/logo:opacity-100 transition-opacity">
+                                    {uploadingLogo ? <Loading message="" /> : <i className="fas fa-camera text-white"></i>}
+                                    <input type="file" className="hidden" onChange={onLogoChange} accept="image/*" disabled={uploadingLogo} />
                                 </label>
                             )}
                         </div>
                     </div>
                 </div>
 
-                {/* 2. NOME DA EMPRESA, BOTÃO DE EDITAR E TAGS */}
-                <div className="mt-20 px-4">
-                    <div className="flex justify-between items-center mb-2">
-                        {isEditMode ? (
-                            <input 
-                                type="text" 
-                                value={nomeFantasia} 
-                                onChange={(e) => setNomeFantasia(e.target.value)}
-                                className="text-2xl font-bold p-1 border-b border-gray-400 focus:border-blue-500 outline-none"
-                            />
-                        ) : (
-                            <h2 className="text-2xl font-bold">{profile.nome_fantasia}</h2>
-                        )}
+                {/* INFO PRINCIPAL */}
+                <div className="mt-14 px-4 mb-6">
+                    <div className="flex justify-between items-start">
+                        <div className="flex-1 pr-4">
+                            {isEditMode ? (
+                                <>
+                                    <div className="mb-2">
+                                        <label className="text-xs text-gray-500 uppercase font-bold">Responsável</label>
+                                        <input 
+                                            type="text" 
+                                            value={fullName} 
+                                            onChange={(e) => setFullName(e.target.value)} 
+                                            className="text-lg text-gray-700 w-full border-b border-gray-300 outline-none bg-transparent" 
+                                            placeholder="Ex: João da Silva" 
+                                        />
+                                    </div>
+                                    <input type="text" value={nomeFantasia} onChange={(e) => setNomeFantasia(e.target.value)} className="text-2xl font-bold w-full border-b-2 border-sw-blue-primary outline-none bg-transparent" placeholder="Nome Fantasia" />
+                                </>
+                            ) : (
+                                <>
+                                    {profile.full_name && <p className="text-sm text-gray-500 font-medium mb-1">{profile.full_name}</p>}
+                                    <h2 className="text-2xl font-bold text-sw-blue-primary">{profile.nome_fantasia || 'Sem nome definido'}</h2>
+                                </>
+                            )}
+                            
+                            <div className="flex flex-wrap gap-2 mt-2">
+                                {displaySpecialties.map((tag, idx) => (
+                                    <span key={idx} className="bg-sw-blue-primary/10 text-sw-blue-primary px-2 py-1 rounded text-xs font-medium border border-sw-blue-primary/20">{tag}</span>
+                                ))}
+                            </div>
+                        </div>
 
-                        {user?.id === profile.id && (
-                            <button onClick={toggleEditMode} className="px-4 py-2 bg-gray-800 text-white rounded-lg shadow-sm flex items-center cursor-pointer">
-                                <i className={`fas ${isEditMode ? "fa-check" : "fa-edit"} mr-2`}></i>
-                                <span>{isEditMode ? "Salvar" : "Editar Perfil"}</span>
+                        {isOwner && (
+                            <button onClick={() => isEditMode ? handleSaveChanges() : setIsEditMode(true)} disabled={isSaving} className={`shrink-0 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-colors ${isEditMode ? 'bg-sw-yellow-accent text-sw-blue-primary hover:bg-[#EAB308]' : 'bg-sw-blue-primary text-white hover:bg-[#1D4ED8]'} ${isSaving ? 'opacity-70 cursor-not-allowed' : ''}`}>
+                                {isSaving ? (<i className="fas fa-spinner fa-spin"></i>) : (<i className={`fas ${isEditMode ? 'fa-save' : 'fa-pen'}`}></i>)}
+                                {isSaving ? 'Salvando...' : (isEditMode ? 'Salvar' : 'Editar')}
                             </button>
                         )}
                     </div>
-                    
-                    {/* Tags de Especialidades */}
-                    <div className="flex flex-wrap gap-2 mb-4">
-                        {displaySpecialties.map((specialty, index) => (
-                            <span key={index} className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-sm">{specialty}</span>
+                </div>
+
+                {/* TABS */}
+                <div className="sticky top-14 bg-[#FAF9F6] z-20 border-b border-gray-200 px-4 overflow-x-auto">
+                    <div className="flex space-x-6 min-w-max">
+                        {['informacoes', 'fotos', 'gestao', 'pedidos'].map((tab) => (
+                            <button key={tab} onClick={() => setActiveTab(tab)} className={`py-3 text-sm font-medium border-b-2 transition-colors capitalize ${activeTab === tab ? 'border-sw-blue-primary text-sw-blue-primary' : 'border-transparent text-gray-500 hover:text-gray-700'}`}>
+                                {tab === 'informacoes' ? 'Sobre' : tab === 'fotos' ? 'Galeria' : tab === 'gestao' ? 'Gestão' : 'Meus Pedidos'}
+                            </button>
                         ))}
                     </div>
                 </div>
 
-                {/* 3. TABS NAVIGATION */}
-                <div className="mt-6 border-b border-gray-200">
-                    <div className="flex px-4">
-                        <button onClick={() => setActiveTab("informacoes")} className={`py-3 px-4 font-medium text-sm border-b-2 ${activeTab === "informacoes" ? "border-gray-800 text-gray-800" : "border-transparent text-gray-500"}`}>Informações</button>
-                        <button onClick={() => setActiveTab("fotos")} className={`py-3 px-4 font-medium text-sm border-b-2 ${activeTab === "fotos" ? "border-gray-800 text-gray-800" : "border-transparent text-gray-500"}`}>Fotos</button>
-                        <button onClick={() => setActiveTab("gestao")} className={`py-3 px-4 font-medium text-sm border-b-2 ${activeTab === "gestao" ? "border-gray-800 text-gray-800" : "border-transparent text-gray-500"}`}>Gestão</button>
-                    </div>
-                </div>
-
-                {/* 4. TAB CONTENT */}
-                <div className="px-4 py-4">
-                    {/* Informações Tab */}
-                    {activeTab === "informacoes" && (
-                        <div className="space-y-6">
-                            {/* Descrição */}
-                            <div className="bg-white rounded-lg shadow-sm p-4">
-                                <h3 className="font-semibold text-lg mb-3">Descrição</h3>
-                                {isEditMode ? (
-                                    <textarea 
-                                        value={descriptionEdit} 
-                                        onChange={(e) => setDescriptionEdit(e.target.value)}
-                                        rows={4} 
-                                        className="w-full p-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-sm"
-                                    ></textarea>
-                                ) : (
-                                    <p className="text-gray-600 text-sm">{profile.description || 'Nenhuma descrição fornecida.'}</p>
-                                )}
-                            </div>
-
-                            {/* Endereço */}
-                            <div className="bg-white rounded-lg shadow-sm p-4">
-                                <h3 className="font-semibold text-lg mb-3">Endereço</h3>
-                                {isEditMode ? (
-                                    <input 
-                                        type="text" 
-                                        value={endereco} 
-                                        onChange={(e) => setEndereco(e.target.value)}
-                                        className="w-full p-2 border border-gray-300 rounded-md text-sm"
-                                    />
-                                ) : (
-                                    <p className="text-gray-600 text-sm">{profile.endereco || 'Não informado'}</p>
-                                )}
-                            </div>
-                            
-                            {/* Horário de Funcionamento */}
-                            <div className="bg-white rounded-lg shadow-sm p-4">
-                                <h3 className="font-semibold text-lg">Horário de Funcionamento</h3>
+                {/* CONTEÚDO TABS */}
+                <div className="p-4 space-y-6">
+                    {activeTab === 'informacoes' && (
+                        <>
+                            <section className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                <h3 className="font-semibold text-sw-blue-primary mb-3 flex items-center gap-2"><i className="fas fa-align-left text-sw-yellow-accent"></i> Descrição</h3>
+                                {isEditMode ? <textarea value={descriptionEdit} onChange={(e) => setDescriptionEdit(e.target.value)} rows={4} className="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sw-blue-primary outline-none text-sm" placeholder="Descreva sua empresa..." /> : <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{profile.description || 'Nenhuma descrição informada.'}</p>}
+                            </section>
+                            <section className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                <h3 className="font-semibold text-sw-blue-primary mb-3 flex items-center gap-2"><i className="fas fa-map-marker-alt text-sw-yellow-accent"></i> Contato e Local</h3>
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-sw-blue-primary/10 flex items-center justify-center text-sw-blue-primary"><i className="fas fa-map-marker-alt"></i></div>
+                                        <div className="flex-1"><p className="text-xs text-gray-500">Endereço</p>{isEditMode ? <input type="text" value={endereco} onChange={(e) => setEndereco(e.target.value)} className="w-full border-b border-gray-300 text-sm py-1 outline-none" /> : <p className="text-sm text-gray-800">{profile.endereco || 'Não informado'}</p>}</div>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-8 h-8 rounded-full bg-sw-blue-primary/10 flex items-center justify-center text-sw-blue-primary"><i className="fas fa-phone"></i></div>
+                                        <div className="flex-1"><p className="text-xs text-gray-500">Telefone</p>{isEditMode ? <input type="text" value={telefone} onChange={(e) => setTelefone(e.target.value)} className="w-full border-b border-gray-300 text-sm py-1 outline-none" /> : <p className="text-sm text-gray-800">{profile.phone || 'Não informado'}</p>}</div>
+                                    </div>
+                                </div>
+                            </section>
+                            <section className="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                                <h3 className="font-semibold text-sw-blue-primary mb-3 flex items-center gap-2"><i className="fas fa-clock text-sw-yellow-accent"></i> Horário de Funcionamento</h3>
                                 <div className="space-y-2">
-                                    {mockOpeningHours.map((item, index) => (<div key={index} className="flex justify-between text-sm"><span className="text-gray-600">{item.day}</span><span className="font-medium">{item.hours}</span></div>))}
+                                    {openingHoursEdit.map((item, index) => (
+                                        <div key={index} className="flex justify-between text-sm border-b border-gray-50 pb-1 last:border-0">
+                                            <span className="text-gray-600 font-medium">{item.day}</span>
+                                            {isEditMode ? <input type="text" className="w-32 p-1 border border-gray-300 rounded text-right text-xs" value={item.hours} onChange={(e) => handleHourChange(index, e.target.value)} /> : <span className={`font-medium ${item.hours === 'Fechado' ? 'text-red-500' : 'text-gray-800'}`}>{item.hours}</span>}
+                                        </div>
+                                    ))}
                                 </div>
-                            </div>
-
-                            {/* Contato (Telefone editável) */}
-                            <div className="bg-white rounded-lg shadow-sm p-4">
-                                <h3 className="font-semibold text-lg">Contato</h3>
-                                <div className="space-y-3">
-                                    <div className="flex items-center">
-                                        <i className="fas fa-phone text-gray-500 w-6"></i>
-                                        {isEditMode ? (
-                                            <input 
-                                                type="tel" 
-                                                value={telefone} 
-                                                onChange={(e) => setTelefone(e.target.value)}
-                                                className="ml-2 p-1 border-b border-gray-300 text-sm"
-                                            />
-                                        ) : (
-                                            <span className="ml-2 text-sm">{profile.telefone || 'Não informado'}</span>
-                                        )}
-                                    </div>
-                                    <div className="flex items-center">
-                                        <i className="fas fa-envelope text-gray-500 w-6"></i>
-                                        <span className="ml-2 text-sm">{profile.email || user?.email || 'Não informado'}</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                            </section>
+                        </>
                     )}
-
-                    {/* Fotos Tab (COM LÓGICA DE UPLOAD E GERENCIAMENTO) */}
-                    {activeTab === "fotos" && (
-                        <div className="space-y-4">
-                            <h3 className="font-semibold text-lg mb-4">Galeria de Fotos</h3>
-                            {user?.id === profile.id && isEditMode && (
-                                <div className="flex gap-4">
-                                    <label htmlFor="gallery-upload" className="flex items-center text-gray-800 text-sm bg-gray-100 px-3 py-2 rounded-lg cursor-pointer hover:bg-gray-200">
-                                        <i className="fas fa-plus mr-2"></i>
-                                        <span>Adicionar Foto</span>
-                                        <input id="gallery-upload" type="file" className="hidden" onChange={handleFileUpload} accept="image/*" multiple />
-                                    </label>
-                                </div>
-                            )}
-
-                            {/* Exibição das Fotos */}
-                            <div className="grid grid-cols-3 gap-2">
-                                {profile.photos_gallery?.map((photoUrl, index) => (
-                                    <div 
-                                        key={index} 
-                                        onClick={() => isEditMode && setSelectedPhotoUrl(photoUrl)}
-                                        className="w-full h-24 bg-gray-200 rounded-lg overflow-hidden relative cursor-pointer group hover:opacity-90 transition-opacity"
-                                    >
-                                        <img src={photoUrl} alt={`Foto ${index + 1}`} className="w-full h-full object-cover" />
-                                        {isEditMode && (
-                                            <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <i className="fas fa-ellipsis-h text-white text-xl"></i>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                                {(!profile.photos_gallery || profile.photos_gallery.length === 0) && <p className="text-gray-500 text-sm p-4 col-span-3">A galeria está vazia.</p>}
-                            </div>
+                    {activeTab === 'fotos' && <div className="text-center py-10 bg-white rounded-xl border border-dashed border-gray-300 text-gray-500">Galeria em desenvolvimento.</div>}
+                    {activeTab === 'gestao' && (
+                        <div className="space-y-6">
+                            <FinancialSection cards={profile.credit_cards || []} onDeleteCard={() => {}} onSetDefaultCard={() => {}} />
+                            <DocumentsSection documents={profile.documents || []} onDocumentUpload={() => {}} onDocumentDelete={() => {}} />
+                            <ReviewsSection reviews={profile.reviews || []} />
+                            <HiringHistorySection history={[]} />
                         </div>
                     )}
                     
-                    {/* Gestão Tab (AGORA COMPLETO) */}
-                    {activeTab === "gestao" && (
-                        <div className="space-y-6">
-                            {/* SEÇÃO DE PAGAMENTOS E FINANCEIRO */}
-                            <div className="bg-white rounded-lg shadow-sm p-4">
-                                <h3 className="font-semibold text-lg mb-4">Meios de Pagamento</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <FinancialSection
-                                        cards={profile.credit_cards || []}
-                                        onDeleteCard={handleDeleteCard}
-                                        onSetDefaultCard={handleSetDefaultCard}
-                                    />
-                                    <DocumentsSection
-                                        documents={profile.documents || []}
-                                        onDocumentUpload={handleDocumentUpload}
-                                        onDocumentDelete={handleDocumentDelete}
-                                    />
-                                </div>
-                            </div>
-
-                            {/* SEÇÃO DE DOCUMENTOS (CNPJ/CPF/Certificados) */}
-                            <div className="bg-white rounded-lg shadow-sm p-4">
-                                <h3 className="font-semibold text-lg mb-4">Documentos da Empresa</h3>
-                                <DocumentsSection 
-                                    documents={documents}
-                                    onDocumentUpload={handleDocumentUpload}
-                                    onDocumentDelete={handleDocumentDelete}
-                                />
-                            </div>
-
-                            {/* SEÇÃO DE AVALIAÇÕES */}
-                            <div className="bg-white rounded-lg shadow-sm p-4">
-                                <h3 className="font-semibold text-lg mb-4">Avaliações Recebidas</h3>
-                                <ReviewsSection reviews={profile.reviews || []} />
-                            </div>
-
-                            {/* HISTÓRICO DE SERVIÇOS */}
-                            <div className="bg-white rounded-lg shadow-sm p-4">
-                                <h3 className="font-semibold text-lg mb-4">Histórico de Contratações</h3>
-                                <HiringHistorySection history={hiringHistory} />
-                            </div>
+                    {/* --- CORREÇÃO 3: USO DO COMPONENTE DASHBOARD NA ABA PEDIDOS --- */}
+                    {activeTab === 'pedidos' && (
+                        <div className="min-h-[500px]">
+                            <ClientDashboard />
                         </div>
                     )}
                 </div>
-            </div>
-
-            {/* Tab Bar (Rodapé de Navegação) */}
-            <div className="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-lg z-10">
-                {/* O Menu de Navegação deve ser um componente externo (ClientTabBar ou DashboardNavigation) */}
             </div>
         </div>
     );

@@ -724,3 +724,323 @@ Para cada frontend, há um arquivo `info.md` que serve como um template para col
 Para documentação detalhada sobre módulos específicos, consulte os seguintes arquivos:
 
 - **Módulo de Leilões:** [Documentação do Módulo de Leilão](./leilao_documentation.md)
+
+conteudo novo. (Politicas RLS)
+
+📘 Documentação Técnica de Banco de Dados - Mr. StafferData: 20 de Novembro de 2024Status: Produção (Beta)Banco de Dados: PostgreSQL (Supabase)Contexto: Estrutura de tabelas, segurança (RLS) e políticas de armazenamento para o perfil de contratante.1. Estrutura de DadosTabela: public.contratantesEsta é a tabela principal que armazena os dados ricos do perfil da empresa. Ela estende a tabela de autenticação (auth.users).Script de Criação:-- Habilita extensão para UUIDs
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Cria a tabela vinculada ao usuário
+CREATE TABLE IF NOT EXISTS public.contratantes (
+    id uuid NOT NULL PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+    
+    -- Dados de Identificação
+    nome_fantasia text NULL,
+    cnpj text NULL,
+    
+    -- Dados de Contato e Localização
+    endereco text NULL,
+    phone text NULL,             -- Mapeado no Frontend como 'telefone'
+    email text NULL,             -- Email de contato público
+    
+    -- Dados Descritivos
+    description text NULL,       -- Mapeado no Frontend como 'descriptionEdit'
+    
+    -- Mídia (URLs do Storage)
+    logo_url text NULL,
+    cover_url text NULL,
+    
+    -- Dados Estruturados (Arrays e JSON)
+    specialties text[] NULL,     -- Array de strings (Ex: ['Bar', 'Restaurante'])
+    opening_hours jsonb NULL,    -- JSON com horários [{day: '...', hours: '...'}]
+    payment_data jsonb NULL,     -- Dados de cartões/pagamento
+    documents jsonb NULL,        -- Lista de documentos legais
+    reviews jsonb NULL,          -- Histórico de avaliações
+    
+    -- Metadados
+    created_at timestamp with time zone NOT NULL DEFAULT now(),
+    updated_at timestamp with time zone NULL
+);
+
+-- Cria índice para busca rápida por nome
+CREATE INDEX IF NOT EXISTS idx_contratantes_nome ON public.contratantes (nome_fantasia);
+2. Segurança e Políticas (Row Level Security - RLS)Estas políticas são CRÍTICAS para o funcionamento do App. Elas definem quem pode ler e alterar os dados, prevenindo os erros 400 Bad Request e 403 Forbidden.Status Atual: Permissiva para o Proprietário, Leitura Pública.Script de Aplicação (Estabilidade):-- 1. Ativa a proteção RLS na tabela
+ALTER TABLE public.contratantes ENABLE ROW LEVEL SECURITY;
+
+-- 2. Limpeza de políticas antigas (Evita conflitos de permissão)
+DROP POLICY IF EXISTS "Permitir Proprietario Atualizar" ON public.contratantes;
+DROP POLICY IF EXISTS "Permitir Leitura Proprietario" ON public.contratantes;
+DROP POLICY IF EXISTS "Contratantes can insert their own data" ON public.contratantes;
+DROP POLICY IF EXISTS "Enable read/write access for authenticated users" ON public.contratantes;
+
+-- 3. POLÍTICA DE ESCRITA TOTAL (INSERT + UPDATE)
+-- Permite que o usuário logado crie e edite APENAS o seu próprio perfil.
+CREATE POLICY "Proprietario Pode Escrever (FULL)"
+ON public.contratantes FOR ALL
+TO authenticated
+USING ( auth.uid() = id )
+WITH CHECK ( auth.uid() = id );
+
+-- 4. POLÍTICA DE LEITURA PÚBLICA (Vitrine)
+-- Permite que qualquer pessoa (mesmo sem login) veja os perfis das empresas.
+CREATE POLICY "Leitura Publica (Vitrine)"
+ON public.contratantes FOR SELECT
+USING ( true );
+3. Automação e Gatilhos (Triggers)Decidimos remover a automação de criação de perfil via SQL (Triggers) para dar controle total ao Frontend (useAuth.tsx). Isso evita condições de corrida onde o usuário tenta logar antes do perfil ser criado pelo banco.Script de Limpeza (Estratégia Frontend-First):-- Remove gatilhos que causam erro 422 ou duplicidade no cadastro
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP FUNCTION IF EXISTS public.handle_new_user CASCADE;
+4. Armazenamento (Storage)Configuração dos buckets para imagens de perfil e capa.Estrutura:Bucket: client-logosAcesso: Público (Imagens carregam sem token assinado)Permissões: Upload restrito ao dono da pasta.Script de Configuração:-- 1. Criar Bucket Público
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES 
+  ('client-logos', 'client-logos', true, 5242880, ARRAY['image/png', 'image/jpeg', 'image/jpg', 'image/webp'])
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+-- 2. Políticas de Segurança do Storage
+CREATE POLICY "Ver Imagens Publicamente"
+ON storage.objects FOR SELECT
+USING ( bucket_id = 'client-logos' );
+
+-- Permite upload/update apenas se o arquivo estiver na raiz ou na pasta do usuário
+CREATE POLICY "Proprietario Gerencia Imagens"
+ON storage.objects FOR ALL
+TO authenticated
+USING ( bucket_id = 'client-logos' )
+WITH CHECK ( bucket_id = 'client-logos' );
+5. Diagnóstico (Scripts de Debug)Use estes scripts para verificar a saúde do banco caso ocorram erros futuros.Verificar Colunas e Tipos:SELECT column_name, data_type, is_nullable
+FROM information_schema.columns 
+WHERE table_name = 'contratantes';
+Verificar Políticas Ativas:SELECT * FROM pg_policies WHERE tablename = 'contratantes';
+
+## Políticas de Segurança (RLS) — Contratantes (Organizado)
+
+- Atualizado em: 20/11/2025
+- Escopo: `public.contratantes` e Storage `client-logos`
+- Objetivo: leitura pública (vitrine) e escrita restrita ao proprietário (auth.uid = id).
+
+### Estrutura de Dados
+
+```sql
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+CREATE TABLE IF NOT EXISTS public.contratantes (
+  id uuid NOT NULL PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
+  nome_fantasia text NULL,
+  cnpj text NULL,
+  endereco text NULL,
+  phone text NULL,
+  email text NULL,
+  description text NULL,
+  logo_url text NULL,
+  cover_url text NULL,
+  specialties text[] NULL,
+  opening_hours jsonb NULL,
+  payment_data jsonb NULL,
+  documents jsonb NULL,
+  reviews jsonb NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_contratantes_nome ON public.contratantes (nome_fantasia);
+```
+
+### Políticas RLS
+
+```sql
+ALTER TABLE public.contratantes ENABLE ROW LEVEL SECURITY;
+
+-- Limpeza de políticas antigas
+DROP POLICY IF EXISTS "Permitir Proprietario Atualizar" ON public.contratantes;
+DROP POLICY IF EXISTS "Permitir Leitura Proprietario" ON public.contratantes;
+DROP POLICY IF EXISTS "Contratantes can insert their own data" ON public.contratantes;
+DROP POLICY IF EXISTS "Enable read/write access for authenticated users" ON public.contratantes;
+
+-- Escrita pelo proprietário
+CREATE POLICY "Proprietario Pode Escrever (FULL)"
+ON public.contratantes FOR ALL
+TO authenticated
+USING ( auth.uid() = id )
+WITH CHECK ( auth.uid() = id );
+
+-- Leitura pública (vitrine)
+CREATE POLICY "Leitura Publica (Vitrine)"
+ON public.contratantes FOR SELECT
+USING ( true );
+```
+
+### Automação (Triggers)
+
+```sql
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP FUNCTION IF EXISTS public.handle_new_user CASCADE;
+```
+
+### Storage: `client-logos`
+
+```sql
+INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+VALUES ('client-logos', 'client-logos', true, 5242880,
+        ARRAY['image/png', 'image/jpeg', 'image/jpg', 'image/webp'])
+ON CONFLICT (id) DO UPDATE SET public = true;
+
+CREATE POLICY "Ver Imagens Publicamente"
+ON storage.objects FOR SELECT
+USING ( bucket_id = 'client-logos' );
+
+CREATE POLICY "Proprietario Gerencia Imagens"
+ON storage.objects FOR ALL
+TO authenticated
+USING ( bucket_id = 'client-logos' )
+WITH CHECK ( bucket_id = 'client-logos' );
+```
+
+### Diagnóstico
+
+```sql
+SELECT column_name, data_type, is_nullable
+FROM information_schema.columns
+WHERE table_name = 'contratantes';
+
+SELECT * FROM pg_policies WHERE tablename = 'contratantes';
+```
+Auditoria no fluxo de dados
+
+1. Mapeamento de Relacionamentos (Quem liga com quem?)
+
+
+| table_schema | constraint_name                           | table_name           | column_name     | foreign_table_name  | foreign_column_name |
+| ------------ | ----------------------------------------- | -------------------- | --------------- | ------------------- | ------------------- |
+| public       | servicos_realizados_professional_id_fkey  | servicos_realizados  | professional_id | professionals       | id                  |
+| public       | agendamentos_professional_id_fkey         | agendamentos         | professional_id | professionals       | id                  |
+| public       | anuncios_de_servicos_professional_id_fkey | anuncios_de_servicos | professional_id | professionals       | id                  |
+| public       | conversas_servico_id_fkey                 | conversas            | servico_id      | servicos_realizados | id                  |
+| public       | mensagens_conversa_id_fkey                | mensagens            | conversa_id     | conversas           | id                  |
+| public       | experiences_categoria_id_fkey             | experiences          | categoria_id    | categorias          | id                  |
+| public       | experiences_regiao_id_fkey                | experiences          | regiao_id       | regioes             | id                  |
+| public       | bookings_user_id_fkey                     | agendamentos         | id_contratante  | users               | id                  |
+| public       | avaliacoes_professional_id_fkey           | avaliacoes           | professional_id | professionals       | id                  |
+| public       | servicos_realizados_id_profissional_fkey  | servicos_realizados  | id_profissional | professionals       | id                  |
+| public       | servicos_realizados_id_contratante_fkey   | servicos_realizados  | id_contratante  | contratantes        | id                  |
+| public       | avaliacoes_id_servico_fkey                | avaliacoes           | id_servico      | servicos_realizados | id                  |
+| public       | avaliacoes_id_avaliador_fkey              | avaliacoes           | id_avaliador    | contratantes        | id                  |
+| public       | avaliacoes_id_avaliado_fkey               | avaliacoes           | id_avaliado     | professionals       | id                  |
+| public       | contratantes_id_fkey                      | contratantes         | id              | profiles            | id                  |
+| public       | auctions_creator_id_fkey                  | auctions             | creator_id      | profiles            | id                  |
+| public       | auctions_category_id_fkey                 | auctions             | category_id     | categorias          | id                  |
+| public       | auctions_winner_id_fkey                   | auctions             | winner_id       | profiles            | id                  |
+| public       | bids_auction_id_fkey                      | bids                 | auction_id      | auctions            | id                  |
+| public       | bids_bidder_id_fkey                       | bids                 | bidder_id       | profiles            | id                  |
+| public       | experiences_professional_id_fkey          | experiences          | professional_id | professionals       | id                  |
+
+
+2.O Detetive de Triggers (Automações Ocultas)
+
+| Tabela Alvo  | Nome do Gatilho               | Evento (INSERT/UPDATE) | O que ele faz (Função)                        |
+| ------------ | ----------------------------- | ---------------------- | --------------------------------------------- |
+| agendamentos | update_bookings_updated_at    | UPDATE                 | EXECUTE FUNCTION update_updated_at_column()   |
+| avaliacoes   | tr_update_professional_rating | UPDATE                 | EXECUTE FUNCTION update_professional_rating() |
+| avaliacoes   | tr_update_professional_rating | INSERT                 | EXECUTE FUNCTION update_professional_rating() |
+| avaliacoes   | tr_update_professional_rating | DELETE                 | EXECUTE FUNCTION update_professional_rating() |
+| categorias   | update_categories_updated_at  | UPDATE                 | EXECUTE FUNCTION update_updated_at_column()   |
+| experiences  | update_experiences_updated_at | UPDATE                 | EXECUTE FUNCTION update_updated_at_column()   |
+| regioes      | update_regioes_updated_at     | UPDATE                 | EXECUTE FUNCTION update_updated_at_column()   |
+| users        | update_users_updated_at       | UPDATE                 | EXECUTE FUNCTION update_updated_at_column()   |
+
+
+3. Auditoria de Segurança RLS (Quem pode fazer o quê?)
+
+
+| Tabela               | Nome da Regra                                                  | Ação Permitida (SELECT/ALL...) | Para Quem (Auth/Public) | Regra de Leitura (USING)                                                                                                                                                                                | Regra de Escrita (WITH CHECK)                                                                                                                                                                                                             |
+| -------------------- | -------------------------------------------------------------- | ------------------------------ | ----------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| agendamentos         | Usuários podem deletar seus próprios agendamentos              | DELETE                         | {public}                | (auth.uid() = id_contratante)                                                                                                                                                                           | null                                                                                                                                                                                                                                      |
+| agendamentos         | Profissionais podem criar agendamentos para si mesmos          | INSERT                         | {public}                | null                                                                                                                                                                                                    | (auth.uid() = professional_id)                                                                                                                                                                                                            |
+| agendamentos         | Usuários podem criar agendamentos                              | INSERT                         | {public}                | null                                                                                                                                                                                                    | (auth.uid() = id_contratante)                                                                                                                                                                                                             |
+| agendamentos         | Profissionais podem ver os seus próprios agendamentos          | SELECT                         | {public}                | (auth.uid() = professional_id)                                                                                                                                                                          | null                                                                                                                                                                                                                                      |
+| agendamentos         | Usuários podem ver seus próprios agendamentos                  | SELECT                         | {public}                | (auth.uid() = id_contratante)                                                                                                                                                                           | null                                                                                                                                                                                                                                      |
+| agendamentos         | Usuários podem atualizar seus próprios agendamentos            | UPDATE                         | {public}                | (auth.uid() = id_contratante)                                                                                                                                                                           | null                                                                                                                                                                                                                                      |
+| anuncios_de_servicos | Profissionais podem gerir os seus próprios anúncios            | ALL                            | {public}                | (auth.uid() = professional_id)                                                                                                                                                                          | (auth.uid() = professional_id)                                                                                                                                                                                                            |
+| anuncios_de_servicos | Anúncios são públicos para leitura                             | SELECT                         | {public}                | true                                                                                                                                                                                                    | null                                                                                                                                                                                                                                      |
+| auctions             | Allow creator to manage their own auction                      | ALL                            | {authenticated}         | (auth.uid() = creator_id)                                                                                                                                                                               | (auth.uid() = creator_id)                                                                                                                                                                                                                 |
+| auctions             | Users can create auctions.                                     | INSERT                         | {authenticated}         | null                                                                                                                                                                                                    | (auth.role() = 'authenticated'::text)                                                                                                                                                                                                     |
+| auctions             | Public auctions are viewable by everyone.                      | SELECT                         | {public}                | true                                                                                                                                                                                                    | null                                                                                                                                                                                                                                      |
+| auctions             | Allow authenticated users to view all auctions                 | SELECT                         | {authenticated}         | true                                                                                                                                                                                                    | null                                                                                                                                                                                                                                      |
+| auctions             | Users can update their own auctions.                           | UPDATE                         | {public}                | (auth.uid() = creator_id)                                                                                                                                                                               | (auth.uid() = creator_id)                                                                                                                                                                                                                 |
+| avaliacoes           | Public read access for avaliacoes                              | SELECT                         | {public}                | true                                                                                                                                                                                                    | null                                                                                                                                                                                                                                      |
+| bids                 | Allow bidder to manage their own bid                           | ALL                            | {authenticated}         | (auth.uid() = bidder_id)                                                                                                                                                                                | (auth.uid() = bidder_id)                                                                                                                                                                                                                  |
+| bids                 | Users can place bids.                                          | INSERT                         | {public}                | null                                                                                                                                                                                                    | (auth.role() = 'authenticated'::text)                                                                                                                                                                                                     |
+| bids                 | Bids are viewable by everyone.                                 | SELECT                         | {public}                | true                                                                                                                                                                                                    | null                                                                                                                                                                                                                                      |
+| bids                 | Bids cannot be updated.                                        | UPDATE                         | {public}                | false                                                                                                                                                                                                   | null                                                                                                                                                                                                                                      |
+| categorias           | Categories são visíveis para todos                             | SELECT                         | {public}                | true                                                                                                                                                                                                    | null                                                                                                                                                                                                                                      |
+| contratantes         | Proprietario Pode Escrever (FULL)                              | ALL                            | {authenticated}         | (auth.uid() = id)                                                                                                                                                                                       | (auth.uid() = id)                                                                                                                                                                                                                         |
+| contratantes         | Leitura Publica (Vitrine)                                      | SELECT                         | {public}                | true                                                                                                                                                                                                    | null                                                                                                                                                                                                                                      |
+| contratantes         | RLS: Leitura Publica                                           | SELECT                         | {public}                | true                                                                                                                                                                                                    | null                                                                                                                                                                                                                                      |
+| conversas            | Permitir leitura para participantes da conversa                | SELECT                         | {authenticated}         | ((auth.uid() = contratante_id) OR (auth.uid() = prestador_id))                                                                                                                                          | null                                                                                                                                                                                                                                      |
+| experiences          | Experiências são visíveis para todos                           | SELECT                         | {public}                | true                                                                                                                                                                                                    | null                                                                                                                                                                                                                                      |
+| mensagens            | Permitir inserção de mensagens para participantes              | INSERT                         | {authenticated}         | null                                                                                                                                                                                                    | ((remetente_id = auth.uid()) AND (( SELECT mensagens.conversa_id
+   FROM conversas
+  WHERE ((conversas.id = mensagens.conversa_id) AND ((auth.uid() = conversas.contratante_id) OR (auth.uid() = conversas.prestador_id)))) IS NOT NULL)) |
+| mensagens            | Permitir leitura de mensagens para participantes               | SELECT                         | {authenticated}         | (( SELECT mensagens.conversa_id
+   FROM conversas
+  WHERE ((conversas.id = mensagens.conversa_id) AND ((auth.uid() = conversas.contratante_id) OR (auth.uid() = conversas.prestador_id)))) IS NOT NULL) | null                                                                                                                                                                                                                                      |
+| professionals        | Permitir que utilizadores autenticados criem o seu próprio per | INSERT                         | {authenticated}         | null                                                                                                                                                                                                    | (auth.uid() = id)                                                                                                                                                                                                                         |
+| professionals        | Perfis são visíveis para todos                                 | SELECT                         | {public}                | true                                                                                                                                                                                                    | null                                                                                                                                                                                                                                      |
+| professionals        | Permitir que o dono do perfil o atualize                       | UPDATE                         | {public}                | (auth.uid() = id)                                                                                                                                                                                       | (auth.uid() = id)                                                                                                                                                                                                                         |
+| profiles             | Usuários podem criar seu próprio perfil                        | INSERT                         | {authenticated}         | null                                                                                                                                                                                                    | (auth.uid() = id)                                                                                                                                                                                                                         |
+| profiles             | Perfis são visíveis para todos autenticados                    | SELECT                         | {authenticated}         | true                                                                                                                                                                                                    | null                                                                                                                                                                                                                                      |
+| profiles             | Usuários podem atualizar seu próprio perfil                    | UPDATE                         | {authenticated}         | (auth.uid() = id)                                                                                                                                                                                       | null                                                                                                                                                                                                                                      |
+| regioes              | Regiões são visíveis para todos                                | SELECT                         | {public}                | true                                                                                                                                                                                                    | null                                                                                                                                                                                                                                      |
+| servicos_realizados  | Permitir que contratantes criem seus próprios serviços         | INSERT                         | {authenticated}         | null                                                                                                                                                                                                    | (auth.uid() = id_contratante)                                                                                                                                                                                                             |
+| servicos_realizados  | Profissionais podem ver os seus próprios serviços              | SELECT                         | {public}                | (auth.uid() = professional_id)                                                                                                                                                                          | null                                                                                                                                                                                                                                      |
+| servicos_realizados  | Public read access for servicos_realizados                     | SELECT                         | {public}                | true                                                                                                                                                                                                    | null                                                                                                                                                                                                                                      |
+| servicos_realizados  | Permitir que profissionais atualizem seus próprios serviços    | UPDATE                         | {authenticated}         | (auth.uid() = professional_id)                                                                                                                                                                          | null                                                                                                                                                                                                                                      |
+| users                | Usuários podem inserir seus próprios dados                     | INSERT                         | {public}                | null                                                                                                                                                                                                    | (auth.uid() = id)                                                                                                                                                                                                                         |
+| users                | Usuários podem ver seus próprios dados                         | SELECT                         | {public}                | (auth.uid() = id)                                                                                                                                                                                       | null                                                                                                                                                                                                                                      |
+| users                | Usuários podem atualizar seus próprios dados                   | UPDATE                         | {public}                | (auth.uid() = id)                                                                                                                                                                                       | null                                                                                                                                                                                                                                      |
+
+4. fluxo de contratação:
+
+| Tabela              | Coluna                        | Tipo de Dado             | Obrigatório? |
+| ------------------- | ----------------------------- | ------------------------ | ------------ |
+| auctions            | id                            | uuid                     | NO           |
+| auctions            | creator_id                    | uuid                     | NO           |
+| auctions            | category_id                   | uuid                     | YES          |
+| auctions            | title                         | character varying        | NO           |
+| auctions            | description                   | text                     | YES          |
+| auctions            | base_price                    | numeric                  | NO           |
+| auctions            | end_date                      | timestamp with time zone | NO           |
+| auctions            | status                        | character varying        | YES          |
+| auctions            | winner_id                     | uuid                     | YES          |
+| auctions            | created_at                    | timestamp with time zone | YES          |
+| auctions            | updated_at                    | timestamp with time zone | YES          |
+| auctions            | winning_professional_id       | uuid                     | YES          |
+| auctions            | auction_start_date            | timestamp with time zone | YES          |
+| auctions            | current_highest_bid_amount    | numeric                  | YES          |
+| bids                | id                            | uuid                     | NO           |
+| bids                | auction_id                    | uuid                     | NO           |
+| bids                | bidder_id                     | uuid                     | NO           |
+| bids                | bid_amount                    | numeric                  | NO           |
+| bids                | created_at                    | timestamp with time zone | YES          |
+| bids                | bid_time                      | timestamp with time zone | YES          |
+| servicos_realizados | id                            | uuid                     | NO           |
+| servicos_realizados | id_profissional               | uuid                     | YES          |
+| servicos_realizados | id_contratante                | uuid                     | YES          |
+| servicos_realizados | data_servico                  | date                     | YES          |
+| servicos_realizados | tipo_servico                  | character varying        | YES          |
+| servicos_realizados | valor                         | numeric                  | YES          |
+| servicos_realizados | status                        | character varying        | YES          |
+| servicos_realizados | data_criacao                  | timestamp with time zone | YES          |
+| servicos_realizados | professional_id               | uuid                     | YES          |
+| servicos_realizados | service_latitude              | numeric                  | YES          |
+| servicos_realizados | service_longitude             | numeric                  | YES          |
+| servicos_realizados | check_in_time                 | timestamp with time zone | YES          |
+| servicos_realizados | check_out_time                | timestamp with time zone | YES          |
+| servicos_realizados | distancia_km                  | numeric                  | YES          |
+| servicos_realizados | contratacao_status            | USER-DEFINED             | YES          |
+| servicos_realizados | status_visualizacao_prestador | text                     | NO           |
+| servicos_realizados | hora_inicio                   | time without time zone   | YES          |
+| servicos_realizados | hora_fim                      | time without time zone   | YES          |
+| servicos_realizados | checklist_alinhamento         | jsonb                    | YES          |
+| servicos_realizados | expira_em                     | timestamp with time zone | YES          |
+

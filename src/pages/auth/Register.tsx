@@ -4,8 +4,10 @@ import { Eye, EyeOff } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { Link, useNavigate } from 'react-router-dom';
 import { z } from 'zod';
-// Mantendo seus imports originais
-import { useAuth, type UserProfile } from '../../hooks/useAuth';
+import { toast } from 'react-hot-toast'; // Importante para feedback de erro
+
+// Imports do seu projeto
+import { useAuthContext, type UserProfile } from '../../hooks/useAuth';
 import { Button } from '../../components/ui/button';
 import {
   Card,
@@ -25,24 +27,31 @@ import {
 } from '../../components/ui/form';
 import { Input } from '../../components/ui/input';
 
+// --- SCHEMA ROBUSTO (COM TRIMS E TRANSFORMS) ---
 const formSchema = z
   .object({
     // --- Etapa 1: Login ---
-    fullName: z.string().min(3, 'O nome completo é obrigatório'),
-    email: z.string().email('Email inválido'),
+    fullName: z.string().min(3, 'O nome completo é obrigatório').trim(),
+    email: z.string().email('Email inválido').trim().toLowerCase(),
     password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres'),
     confirmPassword: z.string(),
     
-    // --- Etapa 2: Dados Pessoais e Endereço (Agora Obrigatórios) ---
-    phone: z.string().min(10, 'Telefone é obrigatório'),
-    document: z.string().min(11, 'CPF ou CNPJ é obrigatório'),
+    // --- Etapa 2: Dados Pessoais e Endereço ---
+    phone: z.string().min(10, 'Telefone é obrigatório (min 10 dígitos)').trim(),
+    document: z.string().min(11, 'CPF ou CNPJ inválido (min 11 dígitos)').trim(),
     
-    cep: z.string().min(8, 'CEP obrigatório'),
-    city: z.string().min(2, 'Cidade obrigatória'),
-    state: z.string().length(2, 'UF inválida (2 letras)'),
-    address: z.string().min(5, 'Endereço é obrigatório'),
+    cep: z.string().min(8, 'CEP inválido (min 8 dígitos)').trim(),
+    city: z.string().min(2, 'Cidade obrigatória').trim(),
     
-    // Apenas Nome da Empresa é opcional (mas validado se for CNPJ)
+    // Transforma automaticamente "sp" em "SP" e remove espaços
+    state: z.string()
+      .trim()
+      .length(2, 'UF inválida (2 letras)')
+      .transform((val) => val.toUpperCase()),
+      
+    address: z.string().min(5, 'Endereço é obrigatório').trim(),
+    
+    // Apenas Nome da Empresa é opcional (mas validado se for CNPJ no superRefine)
     companyName: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
@@ -50,10 +59,11 @@ const formSchema = z
     path: ['confirmPassword'],
   })
   .superRefine((data, ctx) => {
-    const doc = data.document?.replace(/\D/g, ''); 
-    const isCnpj = doc && doc.length > 11; 
+    // Remove caracteres não numéricos para contagem
+    const docClean = data.document?.replace(/\D/g, '') || ''; 
+    const isCnpj = docClean.length > 11; 
 
-    // Se for CNPJ, o Nome da Empresa deixa de ser opcional e vira obrigatório
+    // Regra de Negócio: Se for CNPJ, Nome da Empresa é obrigatório
     if (isCnpj) {
       if (!data.companyName || data.companyName.trim().length === 0) {
         ctx.addIssue({
@@ -70,7 +80,7 @@ const step1Fields = ['fullName', 'email', 'password', 'confirmPassword'] as cons
 
 export function Register() {
   const navigate = useNavigate();
-  const { signUp, loading } = useAuth();
+  const { signUp, loading } = useAuthContext();
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -93,26 +103,43 @@ export function Register() {
       address: '',
       companyName: '',
     },
-    mode: 'onBlur',
+    mode: 'onBlur', // Valida ao sair do campo
   });
 
-  // Monitora o documento para validação visual
+  // Monitora o documento para mostrar aviso visual de CNPJ
   const documentValue = form.watch('document');
-  const isCnpj = documentValue && documentValue.replace(/\D/g, '').length > 11;
+  const docCleanCheck = documentValue?.replace(/\D/g, '') || '';
+  const isCnpj = docCleanCheck.length > 11;
+
+  // --- FUNÇÃO QUE MOSTRA ERROS NO CONSOLE E NA TELA (DEBUG) ---
+  const onInvalid = (errors: any) => {
+    console.error("❌ O envio foi bloqueado por erros de validação:", errors);
+    
+    // [CORREÇÃO] Feedback visual para erros ocultos
+    if (errors.confirmPassword || errors.password || errors.email || errors.fullName) {
+        toast.error("Erro na Etapa 1: Verifique se as senhas coincidem.", { duration: 4000 });
+        // Opcional: Voltar para a etapa 1 automaticamente se o erro for lá
+        // setStep(1); 
+    } else {
+        toast.error("Existem campos inválidos no formulário.", { duration: 3000 });
+    }
+  };
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setError(null);
     try {
       // Concatena o endereço completo para salvar no banco
       const fullAddress = `${values.address} - ${values.city}/${values.state}, CEP: ${values.cep}`;
+      const docClean = values.document.replace(/\D/g, '');
 
       const profileData: Partial<UserProfile> = {
         full_name: values.fullName,
-        nome_fantasia: values.companyName || values.fullName,
+        // Se tiver Nome Fantasia usa ele, senão usa o Nome Completo (para CPF)
+        nome_fantasia: values.companyName?.trim() || values.fullName,
         telefone: values.phone,
         document: values.document,
-        document_type: values.document.replace(/\D/g, '').length > 11 ? 'cnpj' : 'cpf',
-        endereco: fullAddress, // Envia o endereço completo formatado
+        document_type: docClean.length > 11 ? 'cnpj' : 'cpf',
+        endereco: fullAddress, 
         role: 'contratante',
       };
 
@@ -120,10 +147,10 @@ export function Register() {
 
       if (signUpError) {
         setError(signUpError.message);
+        toast.error(signUpError.message);
       } else {
-        navigate('/auth/login', {
-          state: { message: 'Conta criada com sucesso! Verifique seu email para confirmar.' },
-        });
+        toast.success('Conta criada com sucesso!');
+        navigate('/auth/login');
       }
     } catch (err: any) {
       console.error('Erro no onSubmit:', err);
@@ -133,11 +160,20 @@ export function Register() {
 
   const goToNextStep = async () => {
     setError(null);
+    // Força validação apenas dos campos da etapa 1
     const isValid = await form.trigger(step1Fields);
     if (isValid) {
       setStep(2);
     } else {
-      setError("Preencha os campos obrigatórios corretamente.");
+      // Se falhar, pega os erros atuais do form
+      const errors = form.formState.errors;
+      console.log("Erros na Etapa 1:", errors);
+      
+      if (errors.confirmPassword) {
+          toast.error("As senhas não coincidem.");
+      } else {
+          setError("Preencha todos os campos obrigatórios da etapa 1.");
+      }
     }
   };
 
@@ -184,7 +220,8 @@ export function Register() {
         </CardHeader>
 
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-0">
+          {/* onInvalid ajuda a debugar o botão travado com Toast visível */}
+          <form onSubmit={form.handleSubmit(onSubmit, onInvalid)} className="space-y-0">
             
             {renderProgressBar()}
 
@@ -228,7 +265,7 @@ export function Register() {
                     <FormItem>
                       <FormLabel>Confirmar Senha</FormLabel>
                       <FormControl>
-                         <div className="relative">
+                          <div className="relative">
                           <Input type={showConfirmPassword ? 'text' : 'password'} placeholder="Confirme sua senha" {...field} />
                           <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-1/2 -translate-y-1/2" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
                             {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -284,10 +321,18 @@ export function Register() {
                     )}/>
                   </div>
                   <div className="col-span-4 md:col-span-2">
-                     <FormField control={form.control} name="state" render={({ field }) => (
+                      <FormField control={form.control} name="state" render={({ field }) => (
                       <FormItem>
                         <FormLabel>UF</FormLabel>
-                        <FormControl><Input placeholder="SP" maxLength={2} {...field} className="uppercase" /></FormControl>
+                        <FormControl>
+                          <Input 
+                            placeholder="SP" 
+                            maxLength={2} 
+                            {...field} 
+                            className="uppercase" 
+                            onChange={(e) => field.onChange(e.target.value.toUpperCase())} 
+                          />
+                        </FormControl>
                         <FormMessage />
                       </FormItem>
                     )}/>
@@ -303,7 +348,7 @@ export function Register() {
                   </FormItem>
                 )}/>
                 
-                {/* Nome da Empresa (Opcional, mas obrigatório se CNPJ) */}
+                {/* Nome da Empresa */}
                 <FormField control={form.control} name="companyName" render={({ field }) => (
                   <FormItem>
                     <FormLabel>
@@ -317,7 +362,8 @@ export function Register() {
 
               </div>
 
-              {error && <p className="text-sm text-red-500 text-center">{error}</p>}
+              {/* Mostra erros gerais no rodapé do form */}
+              {error && <p className="text-sm text-red-500 text-center bg-red-50 p-2 rounded">{error}</p>}
 
             </CardContent>
             

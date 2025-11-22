@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuctions } from "../hooks/useAuctions";
 import type { Auction, AuctionBid } from "../types/auction";
@@ -39,20 +39,20 @@ const AuctionsPage: React.FC = () => {
     { id: 6, name: "Auxiliar", icon: "fa-solid fa-hands-helping" },
   ];
 
-  useEffect(() => {
-    if (selectedAuction) {
-      loadAuctionBids(selectedAuction.id);
-    }
-  }, [selectedAuction]);
-
-  const loadAuctionBids = async (auctionId: string) => {
+  const loadAuctionBids = useCallback(async (auctionId: string) => {
     const { data, error } = await getAuctionBids(auctionId);
     if (data) {
       setAuctionBids(data);
     } else if (error) {
       toast.error("Erro ao carregar lances: " + error.message);
     }
-  };
+  }, [getAuctionBids]);
+
+  useEffect(() => {
+    if (selectedAuction) {
+      loadAuctionBids(selectedAuction.id);
+    }
+  }, [selectedAuction, loadAuctionBids]);
 
   const getFilteredAuctions = () => {
     let filteredList = [];

@@ -70,7 +70,7 @@ export const usePWA = (): UsePWAReturn => {
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
-  }, []);
+  }, [showAutomaticBanner]);
 
   const installApp = async (): Promise<void> => {
     if (!deferredPrompt) {

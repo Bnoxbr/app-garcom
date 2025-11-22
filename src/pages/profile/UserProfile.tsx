@@ -10,7 +10,7 @@ type ProfessionalProfile = any;
 // Componente para renderizar estrelas de avaliação
 const StarRating = ({ rating }: { rating: number }) => {
     const totalStars = 5;
-    let stars = [];
+    const stars: JSX.Element[] = [];
     for (let i = 1; i <= totalStars; i++) {
         if (i <= rating) {
             stars.push(<i key={i} className="fas fa-star text-yellow-500"></i>);

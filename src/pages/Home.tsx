@@ -4,7 +4,9 @@ import { useProfessionals } from '../hooks/useProfessionals';
 // A linha abaixo pode ser reativada no futuro, mas por agora usamos a lista estática para garantir o visual.
 // import { useCategories } from '../hooks/useCategories';
 import { useAuthContext } from '../hooks/useAuth';
-import { Loading, ErrorMessage, ProfessionalsGrid, PWAInstallButton } from '../components';
+import { Loading, ErrorMessage, ProfessionalsGrid } from '../components';
+
+const PWAInstallButton = React.lazy(() => import('../components/PWAInstallButton'));
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -104,8 +106,12 @@ const Home: React.FC = () => {
                 <p className="text-gray-500 mt-1 text-sm"></p>
               </div>
               <div className="mb-4">
-                <PWAInstallButton variant="minimal" />
-              </div>
+                    {import.meta.env.PROD && (
+                      <React.Suspense fallback={<div></div>}>
+                        <PWAInstallButton variant="minimal" />
+                      </React.Suspense>
+                    )}
+                  </div>
               <div className="flex items-center space-x-2">
                 {/* ... (lógica de login/logout) ... */}
               </div>

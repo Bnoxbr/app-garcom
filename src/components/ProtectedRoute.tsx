@@ -59,14 +59,6 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     }
   }
 
-  // If profile is not loaded yet but user exists, show loading
-  if (!profile) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <Loading message="Carregando perfil..." size="lg" />
-      </div>
-    )
-  }
 
   return <>{children}</>
 }

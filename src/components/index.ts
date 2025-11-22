@@ -3,7 +3,7 @@ export { default as ProtectedRoute } from './ProtectedRoute'
 export { ErrorMessage } from './ErrorMessage'
 export { DebugPanel } from './DebugPanel'
 export { default as ProfessionalsGrid } from './ProfessionalsGrid'
-export { default as PWAUpdatePrompt } from './PWAUpdatePrompt'
-export { default as PWAInstallButton } from './PWAInstallButton'
-export { default as OfflineNotification } from './OfflineNotification'
+
+
+
 export { default as PaymentModal } from './PaymentModal'

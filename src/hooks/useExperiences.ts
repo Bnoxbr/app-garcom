@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '../lib/supabase'
 
 export interface Experience {
@@ -66,7 +66,7 @@ export function useFeaturedExperiences(limit: number = 6) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const fetchFeaturedExperiences = async () => {
+  const fetchFeaturedExperiences = useCallback(async () => {
     try {
       setLoading(true)
       const { data, error } = await supabase
@@ -86,11 +86,11 @@ export function useFeaturedExperiences(limit: number = 6) {
     } finally {
       setLoading(false)
     }
-  }
+  }, [limit])
 
   useEffect(() => {
     fetchFeaturedExperiences()
-  }, [limit])
+  }, [fetchFeaturedExperiences])
 
   return {
     featuredExperiences,
