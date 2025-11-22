@@ -4,7 +4,7 @@ Este documento contém informações técnicas sobre o projeto, incluindo config
 
 ## 📅 Controle de Versão
 
-**📆 Última Atualização:** 03 de Outubro de 2025  
+**📆 Última Atualização:** 22 de Novembro de 2025  
 **👤 Atualizado por:** Agente Técnico Especializado  
 
 > **⚠️ IMPORTANTE:** Sempre que modificar este documento, atualize a data acima e registre as principais alterações realizadas na seção de histórico abaixo.
@@ -13,6 +13,7 @@ Este documento contém informações técnicas sobre o projeto, incluindo config
 
 | Data | Alterações | Responsável |
 |------|------------|-------------|
+| 22/11/2025 | Relatório de incidente e estabilização técnica: correção de loops no upload, tratamento de erro 400 no login, ajustes de Auth e efeitos | Agente Técnico |
 | 03/10/2025 | Integração das seções dinâmicas da aba Gestão, refatoração do ClientProfile.tsx, correções críticas de sintaxe e investigação de perfis/RPCs | Agente Técnico |
 | 15/01/2025 | Adicionada seção "Diagramas de Arquitetura" com links para diagramas de requisições e pipeline | Agente Técnico |
 
@@ -1043,4 +1044,55 @@ Auditoria no fluxo de dados
 | servicos_realizados | hora_fim                      | time without time zone   | YES          |
 | servicos_realizados | checklist_alinhamento         | jsonb                    | YES          |
 | servicos_realizados | expira_em                     | timestamp with time zone | YES          |
+# Documentação Técnica Consolidada
+
+## Relatório de Incidente e Estabilização Técnica
+
+### Contexto
+
+Projeto: Mr. Staffer (App Garçom)
+
+Data: 22 de Novembro de 2025
+
+Status: ✅ Resolvido
+
+### 1. Resumo do Problema
+
+- Loops infinitos de renderização ao subir imagens no `ClientProfile`.
+- Inconsistência de dados após atualização de página (iniciais “SW” reaparecendo), indicando falha de persistência.
+- Conflitos de sessão e loops ao retornar de outra aba/suspensão (erros 400 em refresh token).
+
+### 2. Causas Raiz
+
+- Dissonância de dados entre `public.profiles` e `public.contratantes` sem sincronização automática. Atualizações tentavam alterar linhas inexistentes, gerando “0 linhas afetadas” e ilusão de sucesso no frontend.
+- Race condition no fluxo de autenticação: múltiplos gerentes de sessão (SDK e lógica manual) competindo por refresh de token, levando a erros 400 e re-login em loop.
+- Bloqueio silencioso por RLS: políticas permitiam leitura, mas não escrita/insert para o próprio usuário.
+
+### 3. Soluções Aplicadas
+
+- Banco de Dados:
+  - Uso de `upsert` em vez de `update` para auto-criação de linhas faltantes (auto-cura).
+  - Sincronização de campos entre `profiles` e `contratantes` (e.g. `full_name`).
+  - Política RLS permissiva para o dono:
+
+```sql
+CREATE POLICY "Dono Gerencia Tudo" ON public.contratantes
+FOR ALL TO authenticated
+USING ( auth.uid() = id ) WITH CHECK ( auth.uid() = id );
+```
+
+- React & Estado:
+  - AuthProvider pacificado: remoção de renovação manual de tokens e delegação ao SDK.
+  - Lógica anti-pisca: evitar resets em eventos de refresh quando o `user.id` não muda.
+  - Efeitos blindados: dependências trocadas de objetos para primitivos (e.g. `[user?.id]`).
+
+- Navegação & UX:
+  - Rotas inteligentes para evitar redirecionamentos em cascata.
+  - Integração de abas e redução de navegações desnecessárias.
+
+### 4. Procedimentos de Prevenção
+
+- Nunca usar `update` direto em perfis; preferir `upsert`.
+- Não manipular tokens manualmente; deixar o `supabase-js` lidar com refresh.
+- Cuidado com dependências de `useEffect`: evitar objetos complexos e preferir primitivos como `user.id` e timestamps.
 
